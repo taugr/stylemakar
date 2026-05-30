@@ -1,0 +1,16 @@
+{
+  "id": "student-feedback",
+  "name": "Student Feedback",
+  "description": "Specific, fair, constructive feedback that names what works and what needs to change without vague praise.",
+  "rules": [
+    "Give concrete observations.",
+    "Use a supportive but restrained tone.",
+    "Explain the next improvement clearly.",
+    "Preserve names, dates, numbers, caveats, and responsibilities."
+  ],
+  "antiRules": [
+    "Do not use vague praise or generic encouragement.",
+    "Do not sound like HR feedback.",
+    "Do not over-warm or soften important issues."
+  ]
+}

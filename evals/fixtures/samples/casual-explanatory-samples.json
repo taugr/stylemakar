@@ -1,0 +1,5 @@
+[
+  "This works for now, but it puts two jobs in one place. Splitting them up makes the next change easier to reason about.",
+  "Think of it as a checklist: first keep the meaning, then make it sound like the target style.",
+  "The trade-off is simple. More automation saves time, but only if the checks catch the obvious mistakes."
+]

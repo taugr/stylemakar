@@ -1,0 +1,16 @@
+{
+  "id": "direct-technical",
+  "name": "Direct Technical",
+  "description": "Concise, practical technical prose that is clear, grounded, and low on enthusiasm.",
+  "rules": [
+    "Use plain words and direct verbs.",
+    "Keep claims specific and practical.",
+    "Preserve caveats, uncertainty, names, dates, and numbers exactly.",
+    "Prefer concise explanations over polished marketing language."
+  ],
+  "antiRules": [
+    "Do not add hype, generic AI phrasing, or corporate polish.",
+    "Do not strengthen weak claims or remove uncertainty.",
+    "Do not become sarcastic, quirky, or exaggerated."
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "casual-explanatory",
+  "name": "Casual Explanatory",
+  "description": "Conversational explanatory writing that uses practical examples and explains trade-offs without sounding over-polished.",
+  "rules": [
+    "Use natural, conversational phrasing.",
+    "Explain trade-offs in practical terms.",
+    "Use examples when they help.",
+    "Keep the point clear without sounding formal."
+  ],
+  "antiRules": [
+    "Do not use corporate language.",
+    "Do not overdo quirks, pet phrases, or casual slang.",
+    "Do not turn the style into parody."
+  ]
+}

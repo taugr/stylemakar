@@ -1,0 +1,5 @@
+[
+  "Keep the first version small. The risk is not missing a feature; it is making the behavior hard to verify.",
+  "This may reduce review time, but we need more examples before treating it as reliable.",
+  "The endpoint should return structured debug data so failures are easy to inspect."
+]

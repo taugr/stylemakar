@@ -1,0 +1,81 @@
+- description: 'smoke meaning: preserve causation caveat'
+  vars:
+    providerId: lmstudio
+    model: ''
+    styleProfileId: direct-technical
+    source: The rollout increased acceptance rates, although causation has not yet been validated.
+  assert:
+    - type: contains-any
+      value:
+        - causation
+        - causal
+      metric: causation_caveat_present
+    - type: contains-any
+      value:
+        - not validated
+        - unvalidated
+        - has not been validated
+      metric: validation_caveat_present
+    - type: not-contains
+      value: caused
+      metric: no_causal_claim
+
+- description: 'smoke meaning: preserve names, dates, and numbers'
+  vars:
+    providerId: lmstudio
+    model: ''
+    styleProfileId: student-feedback
+    source: The June 2026 pilot included 42 students across three workshops, with Aram reviewing the final submissions.
+    requiredTerms:
+      - June 2026
+      - '42'
+      - Aram
+      - final submissions
+  assert:
+    - type: javascript
+      value: file://assertions/preserve-required-terms.js
+      metric: required_terms_preserved
+
+- description: 'smoke anti-generic: remove corporate AI phrasing'
+  vars:
+    providerId: lmstudio
+    model: ''
+    styleProfileId: direct-technical
+    source: It is important to note that this robust and comprehensive solution leverages modern AI capabilities to deliver a seamless user experience.
+  assert:
+    - type: javascript
+      value: file://assertions/no-generic-ai.js
+      metric: no_generic_ai_phrases
+    - type: not-contains
+      value: robust and comprehensive
+      metric: removed_inflated_phrase
+    - type: not-contains
+      value: seamless user experience
+      metric: removed_marketing_phrase
+
+- description: 'smoke formatting: preserve code block'
+  vars:
+    providerId: lmstudio
+    model: ''
+    styleProfileId: direct-technical
+    source: |
+      The provider config should use an OpenAI-compatible endpoint.
+
+      ```json
+      {
+        "baseUrl": "http://localhost:1234/v1",
+        "model": "qwen3-14b"
+      }
+      ```
+
+      The surrounding explanation can be rewritten, but the JSON block should not change.
+  assert:
+    - type: javascript
+      value: file://assertions/preserve-code-blocks.js
+      metric: code_blocks_preserved
+    - type: contains
+      value: http://localhost:1234/v1
+      metric: endpoint_preserved
+    - type: contains
+      value: qwen3-14b
+      metric: model_name_preserved

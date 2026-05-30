@@ -1,0 +1,244 @@
+- description: 'meaning: preserve caveat about causation'
+  vars:
+    providerId: lmstudio
+    model: ''
+    styleProfileId: direct-technical
+    source: The rollout increased acceptance rates, although causation has not yet been validated.
+  assert:
+    - type: llm-rubric
+      metric: meaning_preservation
+      threshold: 0.9
+      value: |
+        Does the rewritten text preserve the original meaning?
+
+        It must preserve both:
+        - acceptance rates increased
+        - causation has not yet been validated
+
+        Fail if the output implies that the rollout caused the increase.
+    - type: llm-rubric
+      metric: caveat_preservation
+      threshold: 0.9
+      value: |
+        Does the output preserve the caveat about causation not being validated?
+
+- description: 'meaning: preserve uncertainty'
+  vars:
+    providerId: lmstudio
+    model: ''
+    styleProfileId: direct-technical
+    source: This may reduce review time, but we need more examples before treating it as a reliable improvement.
+  assert:
+    - type: llm-rubric
+      metric: uncertainty_preservation
+      threshold: 0.9
+      value: |
+        Does the output preserve the uncertainty in the original?
+
+        The original says the change may reduce review time, but this is not yet reliable.
+        Fail if the output makes the claim sound proven or definite.
+
+- description: 'meaning: preserve recommendation strength'
+  vars:
+    providerId: lmstudio
+    model: ''
+    styleProfileId: direct-technical
+    source: We should probably keep the first version simple and avoid adding a vector database until there is a clear retrieval problem.
+  assert:
+    - type: llm-rubric
+      metric: recommendation_preservation
+      threshold: 0.9
+      value: |
+        Does the output preserve the recommendation and its strength?
+
+        The original recommends avoiding a vector database for now, unless there is a clear retrieval problem.
+        Fail if the output makes this absolute, reverses the recommendation, or changes the reasoning.
+
+- description: 'meaning: preserve names, dates, and numbers'
+  vars:
+    providerId: lmstudio
+    model: ''
+    styleProfileId: student-feedback
+    source: The June 2026 pilot included 42 students across three workshops, with Aram reviewing the final submissions.
+    requiredTerms:
+      - June 2026
+      - '42'
+      - three workshops
+      - Aram
+      - final submissions
+  assert:
+    - type: contains
+      value: June 2026
+      metric: date_preserved
+    - type: contains
+      value: '42'
+      metric: number_preserved
+    - type: javascript
+      value: file://assertions/preserve-required-terms.js
+      metric: required_terms_preserved
+    - type: llm-rubric
+      metric: entity_preservation
+      threshold: 0.9
+      value: |
+        Does the output preserve the same date, number of students, number of workshops, person name, and review responsibility?
+
+- description: 'anti-generic: remove corporate AI phrasing'
+  vars:
+    providerId: lmstudio
+    model: ''
+    styleProfileId: direct-technical
+    source: It is important to note that this robust and comprehensive solution leverages modern AI capabilities to deliver a seamless user experience.
+  assert:
+    - type: not-contains
+      value: It is important to note
+      metric: removed_generic_phrase
+    - type: not-contains
+      value: robust and comprehensive
+      metric: removed_inflated_phrase
+    - type: not-contains
+      value: seamless user experience
+      metric: removed_marketing_phrase
+    - type: javascript
+      value: file://assertions/no-generic-ai.js
+      metric: no_generic_ai_phrases
+    - type: llm-rubric
+      metric: directness
+      threshold: 0.8
+      value: |
+        Does the output rewrite the source in clearer, more direct language?
+
+        It should avoid corporate, marketing, or generic AI phrasing.
+
+- description: 'anti-generic: avoid generic closing sentence'
+  vars:
+    providerId: lmstudio
+    model: ''
+    styleProfileId: direct-technical
+    source: The tool rewrites each paragraph, grades the result, and retries when the style match is weak. This ensures a high-quality and polished final output that meets the user's needs.
+  assert:
+    - type: llm-rubric
+      metric: anti_generic_ai
+      threshold: 0.8
+      value: |
+        Does the output avoid generic AI-style closing language?
+
+        The source contains a vague sentence about a high-quality polished final output.
+        The rewrite should make this more specific or remove the empty phrasing.
+
+- description: 'style: same source direct technical'
+  vars:
+    providerId: lmstudio
+    model: ''
+    styleProfileId: direct-technical
+    source: The current implementation works, but it mixes too many responsibilities into one function. It would be easier to test if the parsing, rewriting, and grading logic were separated.
+  assert:
+    - type: llm-rubric
+      metric: direct_technical_style
+      threshold: 0.8
+      value: |
+        Does the output match a direct technical writing style?
+
+        Reward:
+        - clear recommendation
+        - practical language
+        - concise explanation
+        - low generic polish
+
+        Do not reward:
+        - excessive warmth
+        - vague encouragement
+        - corporate phrasing
+
+- description: 'style: same source student feedback'
+  vars:
+    providerId: lmstudio
+    model: ''
+    styleProfileId: student-feedback
+    source: The current implementation works, but it mixes too many responsibilities into one function. It would be easier to test if the parsing, rewriting, and grading logic were separated.
+  assert:
+    - type: llm-rubric
+      metric: student_feedback_style
+      threshold: 0.8
+      value: |
+        Does the output match a constructive student feedback style?
+
+        Reward:
+        - specific observation
+        - clear explanation
+        - constructive recommendation
+        - fair tone
+
+        Do not reward:
+        - vague praise
+        - excessive warmth
+        - generic encouragement
+
+- description: 'style: avoid over-imitation'
+  vars:
+    providerId: lmstudio
+    model: ''
+    styleProfileId: casual-explanatory
+    source: The interface has too many controls visible at once. The primary task is just rewriting text, so the design should make that feel obvious.
+  assert:
+    - type: llm-rubric
+      metric: no_parody
+      threshold: 0.8
+      value: |
+        Does the output avoid exaggerated imitation?
+
+        The rewrite should sound natural and plausibly human.
+        Fail if it feels like a caricature of the style profile, overuses pet phrases, or copies superficial quirks.
+
+- description: 'formatting: preserve markdown headings and bullets'
+  vars:
+    providerId: lmstudio
+    model: ''
+    styleProfileId: direct-technical
+    source: |
+      # Rewrite Plan
+
+      The system should process the document in stages.
+
+      - Segment the document
+      - Rewrite each paragraph
+      - Check meaning preservation
+      - Assemble the final output
+  assert:
+    - type: contains
+      value: '#'
+      metric: heading_preserved
+    - type: contains
+      value: '-'
+      metric: bullets_preserved
+    - type: llm-rubric
+      metric: markdown_structure
+      threshold: 0.9
+      value: |
+        Does the output preserve the markdown heading and bullet list structure?
+
+- description: 'formatting: preserve code blocks'
+  vars:
+    providerId: lmstudio
+    model: ''
+    styleProfileId: direct-technical
+    source: |
+      The provider config should use an OpenAI-compatible endpoint.
+
+      ```json
+      {
+        "baseUrl": "http://localhost:1234/v1",
+        "model": "qwen3-14b"
+      }
+      ```
+
+      The surrounding explanation can be rewritten, but the JSON block should not change.
+  assert:
+    - type: javascript
+      value: file://assertions/preserve-code-blocks.js
+      metric: code_blocks_preserved
+    - type: contains
+      value: http://localhost:1234/v1
+      metric: endpoint_preserved
+    - type: contains
+      value: qwen3-14b
+      metric: model_name_preserved

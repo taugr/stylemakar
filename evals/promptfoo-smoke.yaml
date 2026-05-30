@@ -1,0 +1,29 @@
+description: Style Rewriter smoke evals
+
+evaluateOptions:
+  maxConcurrency: 1
+  delay: 1000
+
+prompts:
+  - '{{source}}'
+
+providers:
+  - id: http
+    label: app-rewrite-smoke
+    config:
+      url: http://127.0.0.1:5174/api/eval/rewrite
+      method: POST
+      headers:
+        content-type: application/json
+      body:
+        source: '{{source}}'
+        styleProfileId: '{{styleProfileId}}'
+        providerId: '{{providerId}}'
+        model: '{{model}}'
+        options:
+          maxRewriteIterations: 0
+          runMeaningCheck: true
+          runFinalSmoothing: false
+      transformResponse: json.finalText
+
+tests: file://cases-smoke.yaml

@@ -1,0 +1,40 @@
+description: Style Rewriter MVP evals
+
+evaluateOptions:
+  maxConcurrency: 1
+  delay: 1000
+
+defaultTest:
+  options:
+    provider:
+      id: openai:chat:google/gemma-4-e4b
+      config:
+        apiBaseUrl: http://localhost:1234/v1
+        apiKey: lm-studio
+        temperature: 0
+        max_tokens: 256
+        reasoning_effort: minimal
+
+prompts:
+  - '{{source}}'
+
+providers:
+  - id: http
+    label: app-rewrite
+    config:
+      url: http://127.0.0.1:5174/api/eval/rewrite
+      method: POST
+      headers:
+        content-type: application/json
+      body:
+        source: '{{source}}'
+        styleProfileId: '{{styleProfileId}}'
+        providerId: '{{providerId}}'
+        model: '{{model}}'
+        options:
+          maxRewriteIterations: 2
+          runMeaningCheck: true
+          runFinalSmoothing: true
+      transformResponse: json.finalText
+
+tests: file://cases.yaml
