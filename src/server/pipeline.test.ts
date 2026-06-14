@@ -64,6 +64,21 @@ function styleTargets(): StyleTargets {
   };
 }
 
+const studentFeedbackProfile = {
+  antiRules: [
+    'Do not use vague praise or generic encouragement.',
+    'Do not invent details.',
+  ],
+  description:
+    'Specific, fair, constructive feedback that names what works and what needs to change without vague praise.',
+  id: 'student-feedback',
+  name: 'Student Feedback',
+  rules: [
+    'Give concrete observations.',
+    'Explain the next improvement clearly.',
+  ],
+};
+
 describe('runRewritePipeline', () => {
   it('selects the most relevant reference examples for a paragraph', () => {
     expect(
@@ -204,6 +219,393 @@ describe('runRewritePipeline', () => {
     ).toBe('Make it more direct.');
     expect(result.warnings).toEqual([]);
     expect(result.content).toBe('Repaired draft with 42.');
+  });
+
+  it('retries when anti-generic checks fail despite a passing style grade', async () => {
+    let rewriteCount = 0;
+    const result = await runRewritePipeline(
+      {
+        document:
+          'It is important to note that this robust and comprehensive solution leverages AI.',
+        options: { includeDebug: true, runMeaningCheck: false },
+        provider: DEFAULT_PROVIDER,
+        referenceExamples: DEFAULT_REFERENCE_EXAMPLES,
+        styleProfile: DEFAULT_STYLE_PROFILE,
+      },
+      {
+        completeJson: async <T>(messages: unknown[]): Promise<T> => {
+          const system = JSON.stringify(messages[0]);
+
+          if (system.includes('Extract meaning from the paragraph')) {
+            return extractedMeaning() as T;
+          }
+
+          if (system.includes('Identify behavior-level style targets')) {
+            return styleTargets() as T;
+          }
+
+          if (system.includes('Rewrite the paragraph')) {
+            const user = JSON.stringify(messages[1]);
+            if (rewriteCount > 0) {
+              expect(user).toContain('Remove these generic phrases');
+              expect(user).toContain('robust and comprehensive');
+            }
+            rewriteCount += 1;
+            return {
+              rewrittenText:
+                rewriteCount === 1
+                  ? 'This robust and comprehensive solution leverages AI.'
+                  : 'The system uses AI for the task.',
+            } satisfies RewriteOutput as T;
+          }
+
+          if (system.includes('Grade whether this resembles')) {
+            return passingGrade(90) as T;
+          }
+
+          return {
+            document: 'The system uses AI for the task.',
+          } satisfies FinalSmoothingOutput as T;
+        },
+      },
+    );
+
+    expect(result.content).toBe('The system uses AI for the task.');
+    expect(result.debug?.segmentResults[0]?.attempts).toHaveLength(2);
+    expect(
+      result.debug?.segmentResults[0]?.attempts[0]?.revisionInstruction,
+    ).toContain('Remove these generic phrases');
+    expect(result.warnings).toEqual([]);
+  });
+
+  it('constrains meaning repair so it does not reintroduce generic phrasing', async () => {
+    let meaningCount = 0;
+    let repairCount = 0;
+    const result = await runRewritePipeline(
+      {
+        document:
+          'It is important to note that this robust and comprehensive solution includes 42.',
+        options: { includeDebug: true },
+        provider: DEFAULT_PROVIDER,
+        referenceExamples: DEFAULT_REFERENCE_EXAMPLES,
+        styleProfile: DEFAULT_STYLE_PROFILE,
+      },
+      {
+        completeJson: async <T>(messages: unknown[]): Promise<T> => {
+          const system = JSON.stringify(messages[0]);
+
+          if (system.includes('Extract meaning from the paragraph')) {
+            return extractedMeaning() as T;
+          }
+
+          if (system.includes('Identify behavior-level style targets')) {
+            return styleTargets() as T;
+          }
+
+          if (system.includes('Rewrite the paragraph')) {
+            return {
+              rewrittenText: 'The system handles the task.',
+            } satisfies RewriteOutput as T;
+          }
+
+          if (system.includes('Grade whether this resembles')) {
+            return passingGrade(90) as T;
+          }
+
+          if (system.includes('Check semantic fidelity')) {
+            meaningCount += 1;
+            return meaning(meaningCount > 1) as T;
+          }
+
+          if (system.includes('Repair the existing rewrite')) {
+            const user = JSON.stringify(messages[1]);
+            repairCount += 1;
+            if (repairCount > 1) {
+              expect(user).toContain('Anti-generic feedback');
+              expect(user).toContain('robust and comprehensive');
+            }
+            return {
+              rewrittenText:
+                repairCount === 1
+                  ? 'This robust and comprehensive solution includes 42.'
+                  : 'The system includes 42.',
+            } satisfies RewriteOutput as T;
+          }
+
+          return {
+            document: 'The system includes 42.',
+          } satisfies FinalSmoothingOutput as T;
+        },
+      },
+    );
+
+    expect(repairCount).toBe(2);
+    expect(result.content).toBe('The system includes 42.');
+    expect(result.warnings).toEqual([]);
+  });
+
+  it('does not treat removed generic adjectives as missing meaning', async () => {
+    let repairCount = 0;
+    const result = await runRewritePipeline(
+      {
+        document:
+          'It is important to note that this robust and comprehensive solution delivers a seamless user experience.',
+        options: { includeDebug: true },
+        provider: DEFAULT_PROVIDER,
+        referenceExamples: DEFAULT_REFERENCE_EXAMPLES,
+        styleProfile: DEFAULT_STYLE_PROFILE,
+      },
+      {
+        completeJson: async <T>(messages: unknown[]): Promise<T> => {
+          const system = JSON.stringify(messages[0]);
+
+          if (system.includes('Extract meaning from the paragraph')) {
+            return extractedMeaning() as T;
+          }
+
+          if (system.includes('Identify behavior-level style targets')) {
+            return styleTargets() as T;
+          }
+
+          if (system.includes('Rewrite the paragraph')) {
+            return {
+              rewrittenText: 'The solution improves the user experience.',
+            } satisfies RewriteOutput as T;
+          }
+
+          if (system.includes('Grade whether this resembles')) {
+            return passingGrade(90) as T;
+          }
+
+          if (system.includes('Check semantic fidelity')) {
+            return {
+              addedClaims: [],
+              changedMeaning: [],
+              missingDetails: ['robust', 'comprehensive', 'seamless'],
+              pass: false,
+              riskLevel: 'medium',
+            } satisfies MeaningCheck as T;
+          }
+
+          if (system.includes('Repair the existing rewrite')) {
+            repairCount += 1;
+            return {
+              rewrittenText:
+                'This robust and comprehensive solution improves the seamless user experience.',
+            } satisfies RewriteOutput as T;
+          }
+
+          return {
+            document: 'The solution improves the user experience.',
+          } satisfies FinalSmoothingOutput as T;
+        },
+      },
+    );
+
+    expect(repairCount).toBe(0);
+    expect(result.content).toBe('The solution improves the user experience.');
+    expect(result.debug?.segmentResults[0]?.meaningCheck).toMatchObject({
+      missingDetails: [],
+      pass: true,
+    });
+    expect(result.warnings).toEqual([]);
+  });
+
+  it('retries student feedback that invents unsupported details', async () => {
+    let rewriteCount = 0;
+    const result = await runRewritePipeline(
+      {
+        document: 'Great job on this section; it shows strong effort.',
+        options: { includeDebug: true, runMeaningCheck: false },
+        provider: DEFAULT_PROVIDER,
+        referenceExamples: DEFAULT_REFERENCE_EXAMPLES,
+        styleProfile: studentFeedbackProfile,
+      },
+      {
+        completeJson: async <T>(messages: unknown[]): Promise<T> => {
+          const system = JSON.stringify(messages[0]);
+
+          if (system.includes('Extract meaning from the paragraph')) {
+            return extractedMeaning() as T;
+          }
+
+          if (system.includes('Identify behavior-level style targets')) {
+            return styleTargets() as T;
+          }
+
+          if (system.includes('Rewrite the paragraph')) {
+            const user = JSON.stringify(messages[1]);
+            if (rewriteCount > 0) {
+              expect(user).toContain('Remove unsupported feedback details');
+              expect(user).toContain('subsection');
+            }
+            rewriteCount += 1;
+            return {
+              rewrittenText:
+                rewriteCount === 1
+                  ? 'The subsection is excellent. Maintain this level of detail in upcoming projects.'
+                  : 'The feedback is too broad. Point to one specific choice in the section and explain why it works.',
+            } satisfies RewriteOutput as T;
+          }
+
+          if (system.includes('Grade whether this resembles')) {
+            return passingGrade(92) as T;
+          }
+
+          return {
+            document:
+              'The feedback is too broad. Point to one specific choice in the section and explain why it works.',
+          } satisfies FinalSmoothingOutput as T;
+        },
+      },
+    );
+
+    expect(result.debug?.segmentResults[0]?.attempts).toHaveLength(2);
+    expect(
+      result.debug?.segmentResults[0]?.attempts[0]?.revisionInstruction,
+    ).toContain('Remove unsupported feedback details');
+    expect(result.content).toBe(
+      'The feedback is too broad. Point to one specific choice in the section and explain why it works.',
+    );
+    expect(result.warnings).toEqual([]);
+  });
+
+  it('allows student feedback next-step framing without treating it as an invented claim', async () => {
+    const result = await runRewritePipeline(
+      {
+        document: 'Great job on this section; it shows strong effort.',
+        options: { includeDebug: true },
+        provider: DEFAULT_PROVIDER,
+        referenceExamples: DEFAULT_REFERENCE_EXAMPLES,
+        styleProfile: studentFeedbackProfile,
+      },
+      {
+        completeJson: async <T>(messages: unknown[]): Promise<T> => {
+          const system = JSON.stringify(messages[0]);
+
+          if (system.includes('Extract meaning from the paragraph')) {
+            return extractedMeaning() as T;
+          }
+
+          if (system.includes('Identify behavior-level style targets')) {
+            return styleTargets() as T;
+          }
+
+          if (system.includes('Rewrite the paragraph')) {
+            return {
+              rewrittenText:
+                'The feedback is too broad. Add one specific example and explain why it works.',
+            } satisfies RewriteOutput as T;
+          }
+
+          if (system.includes('Grade whether this resembles')) {
+            return passingGrade(92) as T;
+          }
+
+          if (system.includes('Check semantic fidelity')) {
+            return {
+              addedClaims: [
+                'The rewrite asks the student to add one specific example.',
+              ],
+              changedMeaning: [],
+              missingDetails: [],
+              pass: false,
+              riskLevel: 'medium',
+            } satisfies MeaningCheck as T;
+          }
+
+          return {
+            document:
+              'The feedback is too broad. Add one specific example and explain why it works.',
+          } satisfies FinalSmoothingOutput as T;
+        },
+      },
+    );
+
+    expect(result.content).toBe(
+      'The feedback is too broad. Add one specific example and explain why it works.',
+    );
+    expect(result.debug?.segmentResults[0]?.meaningCheck).toMatchObject({
+      addedClaims: [],
+      pass: true,
+    });
+    expect(result.warnings).toEqual([]);
+  });
+
+  it('does not repair removed student-feedback praise back into the output', async () => {
+    let repairCount = 0;
+    const result = await runRewritePipeline(
+      {
+        document:
+          'I am so proud of this incredible work, and you should feel amazing about how wonderful your answer is.',
+        options: { includeDebug: true },
+        provider: DEFAULT_PROVIDER,
+        referenceExamples: DEFAULT_REFERENCE_EXAMPLES,
+        styleProfile: studentFeedbackProfile,
+      },
+      {
+        completeJson: async <T>(messages: unknown[]): Promise<T> => {
+          const system = JSON.stringify(messages[0]);
+
+          if (system.includes('Extract meaning from the paragraph')) {
+            return extractedMeaning() as T;
+          }
+
+          if (system.includes('Identify behavior-level style targets')) {
+            return styleTargets() as T;
+          }
+
+          if (system.includes('Rewrite the paragraph')) {
+            return {
+              rewrittenText:
+                'The feedback is too broad. Replace it with one specific part of the answer and explain why that part works.',
+            } satisfies RewriteOutput as T;
+          }
+
+          if (system.includes('Grade whether this resembles')) {
+            return passingGrade(95) as T;
+          }
+
+          if (system.includes('Check semantic fidelity')) {
+            return {
+              addedClaims: [],
+              changedMeaning: [],
+              missingDetails: [
+                'so proud',
+                'incredible',
+                'amazing',
+                'wonderful',
+              ],
+              pass: false,
+              riskLevel: 'medium',
+            } satisfies MeaningCheck as T;
+          }
+
+          if (system.includes('Repair the existing rewrite')) {
+            repairCount += 1;
+            return {
+              rewrittenText:
+                'Your answer is high-quality. Replace it with one specific part of the answer.',
+            } satisfies RewriteOutput as T;
+          }
+
+          return {
+            document:
+              'The feedback is too broad. Replace it with one specific part of the answer and explain why that part works.',
+          } satisfies FinalSmoothingOutput as T;
+        },
+      },
+    );
+
+    expect(repairCount).toBe(0);
+    expect(result.content).toBe(
+      'The feedback is too broad. Replace it with one specific part of the answer and explain why that part works.',
+    );
+    expect(result.debug?.segmentResults[0]?.meaningCheck).toMatchObject({
+      missingDetails: [],
+      pass: true,
+    });
+    expect(result.warnings).toEqual([]);
   });
 
   it('normalizes loose model grade responses into numeric style grades', async () => {

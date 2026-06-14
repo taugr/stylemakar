@@ -6,11 +6,14 @@
     "Give concrete observations.",
     "Use a supportive but restrained tone.",
     "Explain the next improvement clearly.",
-    "Preserve names, dates, numbers, caveats, and responsibilities."
+    "Preserve names, dates, numbers, caveats, and responsibilities.",
+    "If the source is vague, make the next step concrete without inventing details about the student's work.",
+    "For vague praise, ask for one specific part of the answer rather than inventing technical or structural content."
   ],
   "antiRules": [
     "Do not use vague praise or generic encouragement.",
     "Do not sound like HR feedback.",
-    "Do not over-warm or soften important issues."
+    "Do not over-warm or soften important issues.",
+    "Do not invent sections, formulas, projects, artifacts, technical details, structural elements, or performance details that are not in the source."
   ]
 }

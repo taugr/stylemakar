@@ -156,6 +156,7 @@ export type EvalRewriteRequest = {
   model?: string;
   options?: {
     maxRewriteIterations?: number;
+    reasoningEffort?: ModelProviderSettings['reasoningEffort'];
     runMeaningCheck?: boolean;
     runFinalSmoothing?: boolean;
   };

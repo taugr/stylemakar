@@ -196,7 +196,11 @@ export function createApp(): Express {
         const result = await runRewritePipeline({
           document: body.document,
           options: body.options,
-          provider: { baseUrl, model },
+          provider: {
+            baseUrl,
+            model,
+            reasoningEffort: body.provider?.reasoningEffort,
+          },
           referenceExamples:
             body.referenceExamples ?? DEFAULT_REFERENCE_EXAMPLES,
           styleProfile: body.styleProfile ?? DEFAULT_STYLE_PROFILE,
@@ -242,7 +246,11 @@ export function createApp(): Express {
             maxRewriteIterations: body.options?.maxRewriteIterations,
             runMeaningCheck: body.options?.runMeaningCheck,
           },
-          provider: { baseUrl, model },
+          provider: {
+            baseUrl,
+            model,
+            reasoningEffort: body.options?.reasoningEffort,
+          },
           referenceExamples: readEvalReferenceExamples(body.styleProfileId),
           styleProfile,
         });

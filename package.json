@@ -25,6 +25,8 @@
     "dev": "concurrently -k \"vite --host 127.0.0.1\" \"tsx watch src/server/index.ts\"",
     "dev:api": "tsx watch src/server/index.ts",
     "eval": "pnpm eval:seed && pnpm eval:rewrite",
+    "eval:iterations": "pnpm eval:seed && tsx evals/scripts/run-iteration-eval.ts",
+    "eval:iterations:matrix": "pnpm eval:seed && tsx evals/scripts/run-iteration-matrix.ts",
     "eval:rewrite": "promptfoo eval -c evals/promptfoo.yaml",
     "eval:seed": "tsx evals/scripts/seed-eval-data.ts",
     "eval:smoke": "pnpm eval:seed && promptfoo eval -c evals/promptfoo-smoke.yaml",

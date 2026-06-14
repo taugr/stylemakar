@@ -3,7 +3,19 @@ import {
   DEFAULT_STYLE_THRESHOLD,
   MAX_REWRITE_ITERATIONS,
 } from '../shared/defaults';
+import {
+  buildAntiGenericFeedback,
+  buildAntiGenericPolicy,
+  checkAntiGeneric,
+  type AntiGenericPolicy,
+} from '../shared/antiGeneric';
 import { isRewritableSegment, segmentDocument } from '../shared/segment';
+import {
+  buildStudentFeedbackFeedback,
+  buildStudentFeedbackPolicy,
+  checkStudentFeedback,
+  type StudentFeedbackPolicy,
+} from '../shared/studentFeedback';
 import { countWords } from '../shared/text';
 import type {
   FinalSmoothingOutput,
@@ -90,6 +102,80 @@ function normalizeMeaningCheck(value: MeaningCheck): MeaningCheck {
       value.riskLevel === 'medium' || value.riskLevel === 'high'
         ? value.riskLevel
         : 'low',
+  };
+}
+
+function removeAntiGenericMissingDetails(
+  meaningCheck: MeaningCheck,
+  antiGenericPolicy: AntiGenericPolicy,
+): MeaningCheck {
+  if (!antiGenericPolicy.active || meaningCheck.missingDetails.length === 0) {
+    return meaningCheck;
+  }
+
+  const missingDetails = meaningCheck.missingDetails.filter((detail) => {
+    const lowerDetail = detail.toLowerCase();
+
+    return !antiGenericPolicy.phrases.some((phrase) => {
+      const lowerPhrase = phrase.toLowerCase();
+      return (
+        lowerPhrase.includes(lowerDetail) || lowerDetail.includes(lowerPhrase)
+      );
+    });
+  });
+
+  return {
+    ...meaningCheck,
+    missingDetails,
+    pass:
+      missingDetails.length === 0 &&
+      meaningCheck.addedClaims.length === 0 &&
+      meaningCheck.changedMeaning.length === 0,
+  };
+}
+
+function removeStudentFeedbackFramingClaims(
+  meaningCheck: MeaningCheck,
+  studentFeedbackPolicy: StudentFeedbackPolicy,
+): MeaningCheck {
+  if (!studentFeedbackPolicy.active) {
+    return meaningCheck;
+  }
+
+  const missingDetails = meaningCheck.missingDetails.filter((detail) => {
+    const lowerDetail = detail.toLowerCase();
+
+    return !studentFeedbackPolicy.vaguePraisePhrases.some((phrase) => {
+      const lowerPhrase = phrase.toLowerCase();
+      return (
+        lowerPhrase.includes(lowerDetail) || lowerDetail.includes(lowerPhrase)
+      );
+    });
+  });
+  const allowedFramingTerms = [
+    'add',
+    'example',
+    'explain',
+    'inspect',
+    'next step',
+    'point to',
+    'revise',
+    'revision',
+    'specific',
+  ];
+  const addedClaims = meaningCheck.addedClaims.filter((claim) => {
+    const lower = claim.toLowerCase();
+    return !allowedFramingTerms.some((term) => lower.includes(term));
+  });
+
+  return {
+    ...meaningCheck,
+    addedClaims,
+    missingDetails,
+    pass:
+      missingDetails.length === 0 &&
+      addedClaims.length === 0 &&
+      meaningCheck.changedMeaning.length === 0,
   };
 }
 
@@ -258,9 +344,13 @@ function buildRewritePrompt(
   styleTargets: StyleTargets,
   selectedReferenceExamples: string[],
   meaningRepresentation: MeaningRepresentation,
+  antiGenericPolicy: AntiGenericPolicy,
+  studentFeedbackPolicy: StudentFeedbackPolicy,
 ): string {
   return [
     buildCompactStylePrompt(request, styleTargets),
+    antiGenericPolicy.instruction,
+    studentFeedbackPolicy.instruction,
     `Meaning to preserve: ${JSON.stringify(meaningRepresentation)}`,
     'Reference examples:',
     ...(selectedReferenceExamples.length > 0
@@ -273,13 +363,18 @@ function buildRewritePrompt(
 async function extractMeaning(
   originalText: string,
   request: PipelineRequest,
+  antiGenericPolicy: AntiGenericPolicy,
   client: PipelineModelClient,
 ): Promise<MeaningRepresentation> {
   const result = await client.completeJson<MeaningRepresentation>(
     [
       {
-        content:
+        content: [
           'Return only valid JSON. No markdown. Extract meaning from the paragraph. Do not rewrite. JSON keys: claims, caveats, constraints, examples, conclusions, mandatoryDetails. Include numbers, names, dates, confidence, uncertainty, and requirements in mandatoryDetails.',
+          antiGenericPolicy.active
+            ? 'Do not treat generic marketing filler or anti-generic phrases as mandatory meaning unless they encode a concrete factual requirement.'
+            : '',
+        ].join(' '),
         role: 'system',
       },
       {
@@ -330,6 +425,8 @@ async function rewriteSegment(
   styleTargets: StyleTargets,
   selectedReferenceExamples: string[],
   previousFeedback: string | undefined,
+  antiGenericPolicy: AntiGenericPolicy,
+  studentFeedbackPolicy: StudentFeedbackPolicy,
   client: PipelineModelClient,
 ): Promise<RewriteOutput> {
   return client.completeJson<RewriteOutput>(
@@ -346,6 +443,8 @@ async function rewriteSegment(
             styleTargets,
             selectedReferenceExamples,
             meaningRepresentation,
+            antiGenericPolicy,
+            studentFeedbackPolicy,
           ),
           previousFeedback
             ? `Targeted revision feedback:\n${previousFeedback}\nImprove the existing rewrite. Do not restart from scratch.`
@@ -365,6 +464,8 @@ async function gradeStyle(
   request: PipelineRequest,
   styleTargets: StyleTargets,
   selectedReferenceExamples: string[],
+  antiGenericPolicy: AntiGenericPolicy,
+  studentFeedbackPolicy: StudentFeedbackPolicy,
   client: PipelineModelClient,
 ): Promise<StyleGrade> {
   const threshold = request.options?.styleThreshold ?? DEFAULT_STYLE_THRESHOLD;
@@ -382,6 +483,14 @@ async function gradeStyle(
             180,
           )}`,
           `Style targets: ${JSON.stringify(styleTargets)}`,
+          antiGenericPolicy.instruction,
+          antiGenericPolicy.active
+            ? 'If the rewrite contains one of the anti-generic phrases, it must fail even if it reads fluently.'
+            : '',
+          studentFeedbackPolicy.instruction,
+          studentFeedbackPolicy.active
+            ? 'If student feedback invents unsupported details or uses vague praise, it must fail even if it sounds constructive.'
+            : '',
           `Relevant reference examples:\n${selectedReferenceExamples
             .map((example) => `- ${trimForPrompt(example, 220)}`)
             .join('\n')}`,
@@ -402,13 +511,22 @@ async function checkMeaning(
   originalText: string,
   rewrittenText: string,
   request: PipelineRequest,
+  antiGenericPolicy: AntiGenericPolicy,
+  studentFeedbackPolicy: StudentFeedbackPolicy,
   client: PipelineModelClient,
 ): Promise<MeaningCheck> {
   const result = await client.completeJson<MeaningCheck>(
     [
       {
-        content:
+        content: [
           'Return only valid JSON. No markdown. Check semantic fidelity. Meaning wins over style. Fail if facts, claims, numbers, names, dates, caveats, constraints, requirements, conclusions, confidence, or uncertainty changed. Fail if the rewrite invents claims, removes qualifications, strengthens weak claims, weakens strong claims, changes intent, or adds recommendations. JSON keys: pass, missingDetails, addedClaims, changedMeaning, riskLevel, optional repairInstruction.',
+          antiGenericPolicy.active
+            ? 'Do not fail solely because the rewrite removed generic marketing filler or anti-generic phrases that do not encode concrete factual requirements.'
+            : '',
+          studentFeedbackPolicy.active
+            ? 'For student feedback, allow generic improvement framing such as asking the student to add, explain, revise, or point to a specific example. Fail only when the rewrite invents facts about the submitted work.'
+            : '',
+        ].join(' '),
         role: 'system',
       },
       {
@@ -422,7 +540,13 @@ async function checkMeaning(
     request.provider,
   );
 
-  return normalizeMeaningCheck(result);
+  return removeStudentFeedbackFramingClaims(
+    removeAntiGenericMissingDetails(
+      normalizeMeaningCheck(result),
+      antiGenericPolicy,
+    ),
+    studentFeedbackPolicy,
+  );
 }
 
 async function repairMeaning(
@@ -432,6 +556,10 @@ async function repairMeaning(
   request: PipelineRequest,
   meaningRepresentation: MeaningRepresentation,
   styleTargets: StyleTargets,
+  antiGenericPolicy: AntiGenericPolicy,
+  studentFeedbackPolicy: StudentFeedbackPolicy,
+  antiGenericFeedback: string | undefined,
+  studentFeedbackFeedback: string | undefined,
   client: PipelineModelClient,
 ): Promise<string> {
   const repair = await client.completeJson<RewriteOutput>(
@@ -444,10 +572,18 @@ async function repairMeaning(
       {
         content: [
           buildCompactStylePrompt(request, styleTargets),
+          antiGenericPolicy.instruction,
+          studentFeedbackPolicy.instruction,
           `Extracted meaning to preserve: ${JSON.stringify(meaningRepresentation)}`,
           `Original:\n${originalText}`,
           `Current rewrite:\n${rewrittenText}`,
           `Meaning feedback:\n${JSON.stringify(meaningCheck)}`,
+          antiGenericFeedback
+            ? `Anti-generic feedback:\n${antiGenericFeedback}`
+            : '',
+          studentFeedbackFeedback
+            ? `Student-feedback feedback:\n${studentFeedbackFeedback}`
+            : '',
         ].join('\n\n'),
         role: 'user',
       },
@@ -515,9 +651,17 @@ export async function runRewritePipeline(
       segment.originalText,
       referencePool,
     );
+    const antiGenericPolicy = buildAntiGenericPolicy(
+      request.styleProfile,
+      segment.originalText,
+    );
+    const studentFeedbackPolicy = buildStudentFeedbackPolicy(
+      request.styleProfile,
+    );
     const meaningRepresentation = await extractMeaning(
       segment.originalText,
       request,
+      antiGenericPolicy,
       client,
     );
     const styleTargets = await identifyStyleTargets(
@@ -526,6 +670,7 @@ export async function runRewritePipeline(
       selectedReferenceExamples,
       client,
     );
+    const segmentWarnings: string[] = [];
 
     for (let iteration = 0; iteration <= maxRewriteIterations; iteration += 1) {
       const rewrite = await rewriteSegment(
@@ -535,6 +680,8 @@ export async function runRewritePipeline(
         styleTargets,
         selectedReferenceExamples,
         feedback,
+        antiGenericPolicy,
+        studentFeedbackPolicy,
         client,
       );
       candidate = rewrite.rewrittenText;
@@ -545,28 +692,66 @@ export async function runRewritePipeline(
         request,
         styleTargets,
         selectedReferenceExamples,
+        antiGenericPolicy,
+        studentFeedbackPolicy,
         client,
       );
+      const antiGenericCheck = checkAntiGeneric(candidate, antiGenericPolicy);
+      const antiGenericFeedback = buildAntiGenericFeedback(antiGenericCheck);
+      const studentFeedbackCheck = checkStudentFeedback(
+        candidate,
+        segment.originalText,
+        studentFeedbackPolicy,
+      );
+      const studentFeedbackFeedback =
+        buildStudentFeedbackFeedback(studentFeedbackCheck);
+      const gradePassed = grade.pass || grade.overall >= threshold;
+      const revisionInstruction =
+        antiGenericFeedback ||
+        studentFeedbackFeedback ||
+        (gradePassed ? undefined : grade.revisionInstruction);
       attempts.push({
         grade,
         iteration,
-        revisionInstruction: grade.pass ? undefined : grade.revisionInstruction,
+        revisionInstruction,
         rewrittenText: candidate,
       });
 
-      if (grade.pass || grade.overall >= threshold) {
+      if (gradePassed && antiGenericCheck.pass && studentFeedbackCheck.pass) {
         break;
       }
 
-      feedback = grade.revisionInstruction;
+      feedback = [
+        antiGenericFeedback,
+        studentFeedbackFeedback,
+        gradePassed ? '' : grade.revisionInstruction,
+      ]
+        .filter(Boolean)
+        .join('\n');
     }
 
     let meaningCheck = runMeaningCheck
-      ? await checkMeaning(segment.originalText, candidate, request, client)
+      ? await checkMeaning(
+          segment.originalText,
+          candidate,
+          request,
+          antiGenericPolicy,
+          studentFeedbackPolicy,
+          client,
+        )
       : PASSING_MEANING_CHECK;
-    const segmentWarnings: string[] = [];
 
     if (runMeaningCheck && !meaningCheck.pass) {
+      const antiGenericBeforeRepair = checkAntiGeneric(
+        candidate,
+        antiGenericPolicy,
+      );
+      const candidateBeforeMeaningRepair = candidate;
+      const studentFeedbackBeforeRepair = checkStudentFeedback(
+        candidate,
+        segment.originalText,
+        studentFeedbackPolicy,
+      );
       candidate = await repairMeaning(
         segment.originalText,
         candidate,
@@ -574,20 +759,144 @@ export async function runRewritePipeline(
         request,
         meaningRepresentation,
         styleTargets,
+        antiGenericPolicy,
+        studentFeedbackPolicy,
+        buildAntiGenericFeedback(antiGenericBeforeRepair),
+        buildStudentFeedbackFeedback(
+          checkStudentFeedback(
+            candidate,
+            segment.originalText,
+            studentFeedbackPolicy,
+          ),
+        ),
         client,
       );
       meaningCheck = await checkMeaning(
         segment.originalText,
         candidate,
         request,
+        antiGenericPolicy,
+        studentFeedbackPolicy,
         client,
       );
+      const antiGenericAfterRepair = checkAntiGeneric(
+        candidate,
+        antiGenericPolicy,
+      );
+
+      if (!antiGenericAfterRepair.pass) {
+        candidate = await repairMeaning(
+          segment.originalText,
+          candidate,
+          meaningCheck,
+          request,
+          meaningRepresentation,
+          styleTargets,
+          antiGenericPolicy,
+          studentFeedbackPolicy,
+          buildAntiGenericFeedback(antiGenericAfterRepair),
+          buildStudentFeedbackFeedback(
+            checkStudentFeedback(
+              candidate,
+              segment.originalText,
+              studentFeedbackPolicy,
+            ),
+          ),
+          client,
+        );
+        meaningCheck = await checkMeaning(
+          segment.originalText,
+          candidate,
+          request,
+          antiGenericPolicy,
+          studentFeedbackPolicy,
+          client,
+        );
+      }
+
+      const studentFeedbackAfterRepair = checkStudentFeedback(
+        candidate,
+        segment.originalText,
+        studentFeedbackPolicy,
+      );
+
+      if (!studentFeedbackAfterRepair.pass) {
+        candidate = await repairMeaning(
+          segment.originalText,
+          candidate,
+          meaningCheck,
+          request,
+          meaningRepresentation,
+          styleTargets,
+          antiGenericPolicy,
+          studentFeedbackPolicy,
+          '',
+          buildStudentFeedbackFeedback(studentFeedbackAfterRepair),
+          client,
+        );
+        meaningCheck = await checkMeaning(
+          segment.originalText,
+          candidate,
+          request,
+          antiGenericPolicy,
+          studentFeedbackPolicy,
+          client,
+        );
+      }
+
+      const studentFeedbackAfterRepairs = checkStudentFeedback(
+        candidate,
+        segment.originalText,
+        studentFeedbackPolicy,
+      );
+
+      if (
+        !studentFeedbackAfterRepairs.pass &&
+        studentFeedbackBeforeRepair.pass
+      ) {
+        candidate = candidateBeforeMeaningRepair;
+        meaningCheck = await checkMeaning(
+          segment.originalText,
+          candidate,
+          request,
+          antiGenericPolicy,
+          studentFeedbackPolicy,
+          client,
+        );
+      }
 
       if (!meaningCheck.pass) {
         const warning = `Meaning check still failing for ${segment.id}.`;
         warnings.push(warning);
         segmentWarnings.push(warning);
       }
+    }
+
+    const finalAntiGenericCheck = checkAntiGeneric(
+      candidate,
+      antiGenericPolicy,
+    );
+
+    if (!finalAntiGenericCheck.pass) {
+      const warning = `Anti-generic check still failing for ${segment.id}: ${finalAntiGenericCheck.matches
+        .map((match) => match.phrase)
+        .join(', ')}.`;
+      warnings.push(warning);
+      segmentWarnings.push(warning);
+    }
+
+    const finalStudentFeedbackCheck = checkStudentFeedback(
+      candidate,
+      segment.originalText,
+      studentFeedbackPolicy,
+    );
+
+    if (!finalStudentFeedbackCheck.pass) {
+      const warning = `Student-feedback check still failing for ${segment.id}: ${finalStudentFeedbackCheck.matches
+        .map((match) => match.phrase)
+        .join(', ')}.`;
+      warnings.push(warning);
+      segmentWarnings.push(warning);
     }
 
     outputSegments.push(candidate);
