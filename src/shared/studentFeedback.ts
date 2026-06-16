@@ -1,4 +1,4 @@
-import type { StyleProfile } from './types';
+import type { MeaningCheck, StyleProfile } from './types';
 
 export type StudentFeedbackMatch = {
   phrase: string;
@@ -17,6 +17,38 @@ export type StudentFeedbackPolicy = {
   unsupportedDetailPhrases: string[];
   vaguePraisePhrases: string[];
 };
+
+const ALLOWED_FEEDBACK_FRAMING_TERMS = [
+  'act on',
+  'actionable',
+  'add',
+  'example',
+  'explain',
+  'identify',
+  'inspect',
+  'name one',
+  'next step',
+  'point to',
+  'replace broad praise',
+  'replace general praise',
+  'revise',
+  'revision',
+  'specific part',
+  'specific section',
+];
+
+const VAGUE_PRAISE_MEANING_TERMS = [
+  'broad praise',
+  'encouragement',
+  'general praise',
+  'praise intensity',
+  'proud',
+  'quality claim',
+  'vague praise',
+  'warm encouragement',
+  'warm praise',
+  'warmth',
+];
 
 export const DEFAULT_UNSUPPORTED_FEEDBACK_DETAILS = [
   'subsection',
@@ -141,6 +173,66 @@ export function checkStudentFeedback(
     active: true,
     matches,
     pass: matches.length === 0,
+  };
+}
+
+function includesPolicyPhrase(value: string, phrases: string[]): boolean {
+  const lower = value.toLowerCase();
+
+  return phrases.some((phrase) => {
+    const lowerPhrase = phrase.toLowerCase();
+    return lower.includes(lowerPhrase) || lowerPhrase.includes(lower);
+  });
+}
+
+function isAllowedVaguePraiseOmission(
+  detail: string,
+  policy: StudentFeedbackPolicy,
+): boolean {
+  return (
+    includesPolicyPhrase(detail, policy.vaguePraisePhrases) ||
+    includesPolicyPhrase(detail, VAGUE_PRAISE_MEANING_TERMS)
+  );
+}
+
+function isAllowedFeedbackFraming(
+  claim: string,
+  policy: StudentFeedbackPolicy,
+): boolean {
+  const lower = claim.toLowerCase();
+
+  if (includesPolicyPhrase(claim, policy.unsupportedDetailPhrases)) {
+    return false;
+  }
+
+  return ALLOWED_FEEDBACK_FRAMING_TERMS.some((term) => lower.includes(term));
+}
+
+export function applyStudentFeedbackMeaningPolicy(
+  meaningCheck: MeaningCheck,
+  policy: StudentFeedbackPolicy,
+): MeaningCheck {
+  if (!policy.active) {
+    return meaningCheck;
+  }
+
+  const missingDetails = meaningCheck.missingDetails.filter(
+    (detail) => !isAllowedVaguePraiseOmission(detail, policy),
+  );
+  const addedClaims = meaningCheck.addedClaims.filter(
+    (claim) => !isAllowedFeedbackFraming(claim, policy),
+  );
+  const pass =
+    missingDetails.length === 0 &&
+    addedClaims.length === 0 &&
+    meaningCheck.changedMeaning.length === 0;
+
+  return {
+    ...meaningCheck,
+    addedClaims,
+    missingDetails,
+    pass,
+    riskLevel: pass ? 'low' : meaningCheck.riskLevel,
   };
 }
 

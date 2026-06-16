@@ -13,6 +13,7 @@ import {
   scoreIterationEvalOutput,
 } from './evalScoring';
 import {
+  applyStudentFeedbackMeaningPolicy,
   buildStudentFeedbackFeedback,
   buildStudentFeedbackPolicy,
   checkStudentFeedback,
@@ -107,6 +108,93 @@ describe('eval scoring helpers', () => {
     expect(buildStudentFeedbackFeedback(check)).toContain(
       'Replace vague praise',
     );
+  });
+
+  it('applies student-feedback meaning policy without weakening concrete fidelity', () => {
+    const policy = buildStudentFeedbackPolicy(studentFeedbackProfile);
+
+    expect(
+      applyStudentFeedbackMeaningPolicy(
+        {
+          addedClaims: [
+            'The rewrite asks the student to add one specific example and explain why it works.',
+          ],
+          changedMeaning: [],
+          missingDetails: [
+            'so proud',
+            'warmth and vague praise',
+            'Aram reviewed 42 submissions in June 2026',
+          ],
+          pass: false,
+          riskLevel: 'medium',
+        },
+        policy,
+      ),
+    ).toMatchObject({
+      addedClaims: [],
+      missingDetails: ['Aram reviewed 42 submissions in June 2026'],
+      pass: false,
+      riskLevel: 'medium',
+    });
+
+    expect(
+      applyStudentFeedbackMeaningPolicy(
+        {
+          addedClaims: [],
+          changedMeaning: [],
+          missingDetails: ['amazing work', 'wonderful answer'],
+          pass: false,
+          riskLevel: 'medium',
+        },
+        policy,
+      ),
+    ).toMatchObject({
+      missingDetails: [],
+      pass: true,
+      riskLevel: 'low',
+    });
+
+    expect(
+      applyStudentFeedbackMeaningPolicy(
+        {
+          addedClaims: [
+            'The rewrite says the student should revise the formula in the next project.',
+          ],
+          changedMeaning: [],
+          missingDetails: [],
+          pass: false,
+          riskLevel: 'high',
+        },
+        policy,
+      ),
+    ).toMatchObject({
+      addedClaims: [
+        'The rewrite says the student should revise the formula in the next project.',
+      ],
+      pass: false,
+      riskLevel: 'high',
+    });
+
+    expect(
+      applyStudentFeedbackMeaningPolicy(
+        {
+          addedClaims: [],
+          changedMeaning: [],
+          missingDetails: [
+            'Warm Springs field notes',
+            'warm-up exercise',
+            'warmth and vague praise',
+          ],
+          pass: false,
+          riskLevel: 'high',
+        },
+        policy,
+      ),
+    ).toMatchObject({
+      missingDetails: ['Warm Springs field notes', 'warm-up exercise'],
+      pass: false,
+      riskLevel: 'high',
+    });
   });
 
   it('requires exact fenced code block preservation', () => {

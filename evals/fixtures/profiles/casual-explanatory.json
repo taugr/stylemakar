@@ -5,7 +5,7 @@
   "rules": [
     "Use natural, conversational phrasing.",
     "Explain trade-offs in practical terms.",
-    "Use examples when they help.",
+    "For technical concepts, include a practical cue such as \"Basically\", \"Think of it as\", or \"For example\" when it helps the explanation land.",
     "Keep the point clear without sounding formal."
   ],
   "antiRules": [

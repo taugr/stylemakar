@@ -11,6 +11,7 @@ import {
 } from '../shared/antiGeneric';
 import { isRewritableSegment, segmentDocument } from '../shared/segment';
 import {
+  applyStudentFeedbackMeaningPolicy,
   buildStudentFeedbackFeedback,
   buildStudentFeedbackPolicy,
   checkStudentFeedback,
@@ -56,6 +57,8 @@ const DEFAULT_STYLE_TARGETS: StyleTargets = {
   usesExamples: false,
   vocabulary: ['straightforward language'],
 };
+
+const STUDENT_FEEDBACK_STYLE_RETRY_FLOOR = 75;
 
 function getMaxRewriteIterations(request: PipelineRequest): number {
   const configured = request.options?.maxRewriteIterations;
@@ -130,51 +133,6 @@ function removeAntiGenericMissingDetails(
     pass:
       missingDetails.length === 0 &&
       meaningCheck.addedClaims.length === 0 &&
-      meaningCheck.changedMeaning.length === 0,
-  };
-}
-
-function removeStudentFeedbackFramingClaims(
-  meaningCheck: MeaningCheck,
-  studentFeedbackPolicy: StudentFeedbackPolicy,
-): MeaningCheck {
-  if (!studentFeedbackPolicy.active) {
-    return meaningCheck;
-  }
-
-  const missingDetails = meaningCheck.missingDetails.filter((detail) => {
-    const lowerDetail = detail.toLowerCase();
-
-    return !studentFeedbackPolicy.vaguePraisePhrases.some((phrase) => {
-      const lowerPhrase = phrase.toLowerCase();
-      return (
-        lowerPhrase.includes(lowerDetail) || lowerDetail.includes(lowerPhrase)
-      );
-    });
-  });
-  const allowedFramingTerms = [
-    'add',
-    'example',
-    'explain',
-    'inspect',
-    'next step',
-    'point to',
-    'revise',
-    'revision',
-    'specific',
-  ];
-  const addedClaims = meaningCheck.addedClaims.filter((claim) => {
-    const lower = claim.toLowerCase();
-    return !allowedFramingTerms.some((term) => lower.includes(term));
-  });
-
-  return {
-    ...meaningCheck,
-    addedClaims,
-    missingDetails,
-    pass:
-      missingDetails.length === 0 &&
-      addedClaims.length === 0 &&
       meaningCheck.changedMeaning.length === 0,
   };
 }
@@ -540,7 +498,7 @@ async function checkMeaning(
     request.provider,
   );
 
-  return removeStudentFeedbackFramingClaims(
+  return applyStudentFeedbackMeaningPolicy(
     removeAntiGenericMissingDetails(
       normalizeMeaningCheck(result),
       antiGenericPolicy,
@@ -706,10 +664,18 @@ export async function runRewritePipeline(
       const studentFeedbackFeedback =
         buildStudentFeedbackFeedback(studentFeedbackCheck);
       const gradePassed = grade.pass || grade.overall >= threshold;
-      const revisionInstruction =
-        antiGenericFeedback ||
-        studentFeedbackFeedback ||
-        (gradePassed ? undefined : grade.revisionInstruction);
+      const gatesPassed = antiGenericCheck.pass && studentFeedbackCheck.pass;
+      const studentFeedbackAcceptableStyleThreshold =
+        request.options?.styleThreshold ?? STUDENT_FEEDBACK_STYLE_RETRY_FLOOR;
+      const studentFeedbackDraftIsAcceptable =
+        studentFeedbackPolicy.active &&
+        gatesPassed &&
+        grade.overall >= studentFeedbackAcceptableStyleThreshold;
+      const revisionInstruction = studentFeedbackDraftIsAcceptable
+        ? undefined
+        : antiGenericFeedback ||
+          studentFeedbackFeedback ||
+          (gradePassed ? undefined : grade.revisionInstruction);
       attempts.push({
         grade,
         iteration,
@@ -717,7 +683,7 @@ export async function runRewritePipeline(
         rewrittenText: candidate,
       });
 
-      if (gradePassed && antiGenericCheck.pass && studentFeedbackCheck.pass) {
+      if ((gradePassed || studentFeedbackDraftIsAcceptable) && gatesPassed) {
         break;
       }
 
