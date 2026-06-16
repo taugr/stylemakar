@@ -5,3 +5,4 @@ dist/
 *.log
 evals/.seeded-eval-data.json
 evals/results/
+output/
