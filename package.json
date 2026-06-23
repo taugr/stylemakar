@@ -32,6 +32,9 @@
     "eval:smoke": "pnpm eval:seed && promptfoo eval -c evals/promptfoo-smoke.yaml",
     "eval:view": "promptfoo view",
     "build": "tsc --noEmit && vite build",
+    "desktop:build": "tauri build",
+    "desktop:check": "pnpm typecheck && cargo check --manifest-path src-tauri/Cargo.toml",
+    "desktop:dev": "tauri dev",
     "start": "tsx src/server/index.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -43,6 +46,7 @@
     "prepare": "node scripts/prepare.mjs"
   },
   "dependencies": {
+    "@tauri-apps/api": "^2.11.1",
     "@vitejs/plugin-react": "^5.0.0",
     "concurrently": "^9.1.2",
     "express": "^4.19.2",
@@ -53,6 +57,7 @@
     "vite": "^6.0.0"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.11.3",
     "@types/express": "^4.17.21",
     "@types/node": "^22.10.2",
     "@types/react": "^19.0.1",

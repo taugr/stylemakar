@@ -7,3 +7,5 @@ evals/.seeded-eval-data.json
 evals/results/
 output/
 design/mobile-ux-review/*.png
+src-tauri/gen/
+src-tauri/target/

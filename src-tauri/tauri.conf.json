@@ -1,0 +1,36 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "StyleMakar",
+  "version": "0.1.0",
+  "identifier": "com.tomauger.stylemakar",
+  "build": {
+    "beforeDevCommand": "pnpm run dev",
+    "beforeBuildCommand": "pnpm run build",
+    "devUrl": "http://127.0.0.1:5173",
+    "frontendDist": "../dist/client"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "StyleMakar",
+        "url": "index.html",
+        "width": 1280,
+        "height": 840,
+        "minWidth": 960,
+        "minHeight": 680,
+        "center": true,
+        "focus": true,
+        "visible": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self' tauri: asset: http://asset.localhost; connect-src 'self' ipc: http://localhost:* http://127.0.0.1:* https:; img-src 'self' asset: http://asset.localhost data:; style-src 'self' 'unsafe-inline'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["app"],
+    "icon": []
+  }
+}

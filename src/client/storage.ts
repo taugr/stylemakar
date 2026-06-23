@@ -31,10 +31,19 @@ export function loadProvider(): ModelProviderSettings {
   }
 
   try {
-    return {
+    const provider = {
       ...DEFAULT_PROVIDER,
       ...(JSON.parse(stored) as ModelProviderSettings),
     };
+
+    if (
+      provider.reasoningEffort === 'minimal' &&
+      provider.model?.toLowerCase().includes('gemma-4-12b-qat')
+    ) {
+      return { ...provider, reasoningEffort: 'none' };
+    }
+
+    return provider;
   } catch {
     return DEFAULT_PROVIDER;
   }

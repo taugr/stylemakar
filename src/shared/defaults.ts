@@ -3,7 +3,7 @@ import type { ModelProviderSettings, StyleProfile } from './types';
 export const DEFAULT_PROVIDER: ModelProviderSettings = {
   baseUrl: 'http://localhost:1234/v1',
   model: 'gemma-4',
-  reasoningEffort: 'minimal',
+  reasoningEffort: 'none',
 };
 
 export const DEFAULT_STYLE_PROFILE: StyleProfile = {

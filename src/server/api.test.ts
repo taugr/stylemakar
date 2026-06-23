@@ -157,7 +157,7 @@ describe('api', () => {
     expect(body.debug).toBeTruthy();
     expect(completionRequestBodies).toContainEqual(
       expect.objectContaining({
-        reasoning_effort: 'minimal',
+        reasoning_effort: 'none',
       }),
     );
   });

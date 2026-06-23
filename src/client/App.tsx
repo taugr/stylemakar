@@ -85,6 +85,19 @@ function mobileModelLabel(health: string): string {
   return 'Gemma ready';
 }
 
+function withModelDefaults(
+  provider: ModelProviderSettings,
+  model: string,
+): ModelProviderSettings {
+  return {
+    ...provider,
+    model,
+    reasoningEffort: model.toLowerCase().includes('gemma-4-12b-qat')
+      ? 'none'
+      : provider.reasoningEffort,
+  };
+}
+
 type MobileSheet = 'checks' | 'compare' | 'documents' | 'examples';
 type MobileTab = 'rewrite' | 'source';
 
@@ -183,7 +196,7 @@ export function App(): ReactElement | null {
       .then((result) => {
         setHealth(result.lmStudioReachable ? 'LM Studio' : 'Offline');
         if (result.model && provider.model !== result.model) {
-          setProvider((current) => ({ ...current, model: result.model }));
+          setProvider((current) => withModelDefaults(current, result.model));
         }
       })
       .catch(() => setHealth('Offline'));
@@ -309,11 +322,11 @@ export function App(): ReactElement | null {
       });
       updateActiveDocument({
         debug: result.debug,
-        provider: { ...provider, model: result.model },
+        provider: withModelDefaults(provider, result.model),
         rewrittenText: result.content,
         warnings: result.warnings,
       });
-      setProvider((current) => ({ ...current, model: result.model }));
+      setProvider((current) => withModelDefaults(current, result.model));
       setMobileTab('rewrite');
     } catch (rewriteError) {
       setError(
@@ -740,8 +753,7 @@ export function App(): ReactElement | null {
                         value={provider.model ?? 'gemma-4'}
                         onChange={(event) =>
                           setProvider((current) => ({
-                            ...current,
-                            model: event.target.value,
+                            ...withModelDefaults(current, event.target.value),
                           }))
                         }
                       >
@@ -1010,8 +1022,7 @@ export function App(): ReactElement | null {
                     value={provider.model ?? 'gemma-4'}
                     onChange={(event) =>
                       setProvider((current) => ({
-                        ...current,
-                        model: event.target.value,
+                        ...withModelDefaults(current, event.target.value),
                       }))
                     }
                   >
