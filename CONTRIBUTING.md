@@ -7,7 +7,7 @@ Thanks for contributing.
 Requirements:
 
 - Node.js 22.13+
-- pnpm 9+
+- pnpm 11+
 
 Clone the repo and install dependencies:
 

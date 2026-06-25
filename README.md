@@ -14,7 +14,7 @@ StyleMakar is a TypeScript/Vite app with:
 ## Requirements
 
 - Node.js 22+
-- pnpm 9+
+- pnpm 11+
 - LM Studio or another OpenAI-compatible provider
 - A loaded chat model
 
