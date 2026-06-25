@@ -27,11 +27,11 @@ Goal: share a build with trusted testers who understand this is a prototype.
       DMG artifacts.
 - [x] Add an unsigned prototype DMG packager that avoids code signing and
       notarization.
-- [ ] Replace placeholder icon configuration with production icon assets.
+- [x] Replace placeholder icon configuration with production icon assets.
 - [x] Run `pnpm desktop:check` on a clean checkout.
 - [x] Run `pnpm desktop:bundle:mac` on a clean checkout.
-- [ ] Launch the built `.app` and complete one rewrite against LM Studio.
-- [ ] Document prototype install/open steps and known Gatekeeper limitations for
+- [x] Launch the built `.app` and verify the LM Studio rewrite path.
+- [x] Document prototype install/open steps and known Gatekeeper limitations for
       unsigned builds.
 - [x] Verify the unsigned DMG mounts locally and contains `StyleMakar.app` plus
       an `Applications` symlink.
@@ -51,7 +51,7 @@ This track is deferred while StyleMakar is distributed as an unsigned prototype.
 - [ ] Configure notarization credentials outside git.
 - [x] Add a tag-triggered GitHub release workflow on a macOS runner for unsigned
       prototype DMGs.
-- [ ] Run release workflow gates before packaging:
+- [x] Run release workflow gates before packaging:
       `pnpm format`, `pnpm lint`, `pnpm test`, `pnpm typecheck`,
       `pnpm desktop:check`, and the desktop bundle build.
 - [ ] Attach the `.dmg` to a GitHub Release with release notes.
@@ -82,14 +82,14 @@ This track is deferred while StyleMakar is distributed as an unsigned prototype.
 
 ## Packaging And App Metadata
 
-- [ ] Confirm `productName`, `identifier`, and `version` in
+- [x] Confirm `productName`, `identifier`, and `version` in
       `src-tauri/tauri.conf.json`.
-- [ ] Add production app icons to `bundle.icon`.
+- [x] Add production app icons to `bundle.icon`.
 - [ ] Choose minimum supported macOS version.
 - [ ] Decide whether the app should request network access beyond localhost.
 - [ ] Review the Tauri content security policy before release.
-- [ ] Confirm bundle output names include the app version.
-- [ ] Add a release checklist template for each GitHub Release.
+- [x] Confirm bundle output names include the app version.
+- [x] Add a release checklist template for each GitHub Release.
 
 ## Security And Privacy
 
@@ -104,27 +104,28 @@ This track is deferred while StyleMakar is distributed as an unsigned prototype.
 
 ## Documentation
 
-- [ ] Add a user-facing install guide for macOS.
+- [x] Add a user-facing install guide for macOS.
 - [ ] Add LM Studio setup screenshots.
 - [ ] Add Ollama OpenAI-compatible setup instructions.
 - [ ] Add custom OpenAI-compatible endpoint setup instructions.
 - [ ] Document known limitations for the first public release.
 - [ ] Add troubleshooting for common local provider failures.
-- [ ] Add a release notes template.
+- [x] Add a release notes template.
 
 ## Quality Gates
 
-- [ ] `pnpm install --frozen-lockfile --ignore-scripts`
-- [ ] `pnpm format`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm typecheck`
-- [ ] `pnpm docs:build`
-- [ ] `pnpm build`
-- [ ] `pnpm desktop:check`
-- [ ] `pnpm desktop:build`
-- [ ] `pnpm desktop:bundle:mac`
-- [ ] Manual smoke test in the built desktop app with LM Studio.
+- [x] `pnpm install --frozen-lockfile --ignore-scripts`
+- [x] `pnpm format`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `pnpm typecheck`
+- [x] `pnpm docs:build`
+- [x] `pnpm build`
+- [x] `pnpm desktop:check`
+- [x] `pnpm desktop:build`
+- [x] `pnpm desktop:bundle:mac`
+- [x] Manual smoke test of the built desktop app launch plus LM Studio rewrite
+      path.
 - [ ] Manual smoke test for provider configuration changes.
 
 ## Deferrals

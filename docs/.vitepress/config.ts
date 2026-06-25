@@ -43,6 +43,7 @@ export default defineConfig({
     nav: [
       { link: '/guide/', text: 'Guide' },
       { link: '/guide/getting-started', text: 'Getting Started' },
+      { link: '/guide/install', text: 'Install' },
       { link: '/guide/providers', text: 'Providers' },
       { link: '/guide/tutorials', text: 'Tutorials' },
       {
@@ -72,6 +73,7 @@ export default defineConfig({
           items: [
             { link: '/guide/', text: 'Overview' },
             { link: '/guide/getting-started', text: 'Getting Started' },
+            { link: '/guide/install', text: 'Install Prototype' },
             { link: '/guide/providers', text: 'Provider Setup' },
             { link: '/guide/tutorials', text: 'Tutorials' },
             { link: '/guide/desktop', text: 'Desktop App' },
@@ -118,6 +120,10 @@ export default defineConfig({
             {
               link: '/specs/ui-option-three-plan',
               text: 'Option Three UI Plan',
+            },
+            {
+              link: '/specs/release-notes-template',
+              text: 'Release Notes Template',
             },
           ],
           text: 'Specs',

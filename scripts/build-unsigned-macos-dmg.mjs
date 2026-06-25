@@ -40,6 +40,8 @@ if (platform() !== 'darwin') {
 }
 
 run('pnpm', ['tauri', 'build', '--bundles', 'app']);
+run('codesign', ['--force', '--deep', '--sign', '-', appPath]);
+run('codesign', ['--verify', '--deep', '--verbose=2', appPath]);
 
 rmSync(stagingDir, { force: true, recursive: true });
 mkdirSync(stagingDir, { recursive: true });

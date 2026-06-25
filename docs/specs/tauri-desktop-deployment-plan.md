@@ -73,6 +73,8 @@ Required changes:
   Tauri app bundle.
 - Use `scripts/build-unsigned-macos-dmg.mjs` to package the `.app` into an
   unsigned prototype DMG without Apple Developer credentials.
+- Ad-hoc sign the `.app` with `codesign --sign -` so Launch Services can open
+  the prototype bundle without a Developer ID certificate.
 - Add production icon files and configure them in `bundle.icon`.
 - Verify app metadata:
   - `productName`

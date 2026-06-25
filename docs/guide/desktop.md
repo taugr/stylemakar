@@ -24,12 +24,24 @@ This runs TypeScript checking and Rust `cargo check` for `src-tauri/Cargo.toml`.
 pnpm desktop:build
 ```
 
-The current prototype has produced a macOS `.app` bundle. Unsigned builds are appropriate for developer demos, while a user-facing macOS release should be signed and notarized before distribution.
+This produces the macOS `.app` bundle.
+
+To build the unsigned prototype DMG:
+
+```sh
+pnpm desktop:bundle:mac
+```
+
+The prototype DMG is ad-hoc signed for local launch compatibility, but it is not
+signed with Apple Developer credentials and is not notarized. macOS Gatekeeper
+warnings are expected.
 
 ## Provider Expectations
 
 The current verified local path is LM Studio with a Gemma 4 QAT model and `reasoningEffort: none`. The product direction is broader than LM Studio: future provider profiles should cover local and remote OpenAI-compatible providers, with secure API-key storage before enabling remote key-authenticated providers.
 
-## Release Notes
+## Install Docs
 
-Before public desktop distribution, the repo still needs release-ready bundle targets, production icons, signing and notarization configuration, repeatable release CI, and provider profile management.
+Use the [prototype install guide](./install.md) when testing a release artifact.
+Before broader distribution, the repo still needs provider profile management,
+secure API-key storage, and a decision on signing/notarization.
