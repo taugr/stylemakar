@@ -9,8 +9,8 @@ type VitePlugins = NonNullable<
   NonNullable<Parameters<typeof defineConfig>[0]['vite']>['plugins']
 >;
 
-const repoUrl = 'https://github.com/tom-auger/stylemakar';
-const siteUrl = 'https://tom-auger.github.io/stylemakar/';
+const repoUrl = 'https://github.com/taugr/stylemakar';
+const siteUrl = 'https://taugr.github.io/stylemakar/';
 const description =
   'Local-first writing style rewriter for OpenAI-compatible model providers.';
 

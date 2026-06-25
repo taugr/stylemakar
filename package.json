@@ -10,15 +10,15 @@
     "typescript",
     "vite"
   ],
-  "homepage": "https://github.com/tom-auger/stylemakar#readme",
+  "homepage": "https://github.com/taugr/stylemakar#readme",
   "bugs": {
-    "url": "https://github.com/tom-auger/stylemakar/issues"
+    "url": "https://github.com/taugr/stylemakar/issues"
   },
   "license": "MIT",
   "author": "Tom Auger <tom@tau.gr>",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tom-auger/stylemakar.git"
+    "url": "git+https://github.com/taugr/stylemakar.git"
   },
   "type": "module",
   "scripts": {
