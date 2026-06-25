@@ -51,14 +51,14 @@ function displayDate(value: string): string {
 
 function modelStatusLabel(health: string): string {
   if (health === 'Offline') {
-    return 'LM Studio offline';
+    return 'Provider offline';
   }
 
   if (health === 'Checking') {
-    return 'Checking model';
+    return 'Checking provider';
   }
 
-  return 'LM Studio ready';
+  return 'Provider ready';
 }
 
 function mobileStatusLabel(health: string): string {
@@ -75,14 +75,14 @@ function mobileStatusLabel(health: string): string {
 
 function mobileModelLabel(health: string): string {
   if (health === 'Offline') {
-    return 'Model offline';
+    return 'Provider offline';
   }
 
   if (health === 'Checking') {
-    return 'Checking model';
+    return 'Checking provider';
   }
 
-  return 'Gemma ready';
+  return 'Provider ready';
 }
 
 function withModelDefaults(
@@ -192,19 +192,19 @@ export function App(): ReactElement | null {
   }, [provider]);
 
   useEffect(() => {
-    void getHealth()
+    void getHealth(provider)
       .then((result) => {
-        setHealth(result.lmStudioReachable ? 'LM Studio' : 'Offline');
+        setHealth(result.lmStudioReachable ? 'Provider' : 'Offline');
         if (result.model && provider.model !== result.model) {
           setProvider((current) => withModelDefaults(current, result.model));
         }
       })
       .catch(() => setHealth('Offline'));
 
-    void getModels().then((result) => {
+    void getModels(provider).then((result) => {
       setModels(result.map((model) => model.id));
     });
-  }, []);
+  }, [provider.baseUrl]);
 
   useEffect(() => {
     if (!activeSheet) {
@@ -766,7 +766,16 @@ export function App(): ReactElement | null {
                     </label>
                     <label>
                       <span>Endpoint</span>
-                      <input readOnly value={provider.baseUrl} />
+                      <input
+                        aria-label="Provider endpoint"
+                        onChange={(event) =>
+                          setProvider((current) => ({
+                            ...current,
+                            baseUrl: event.target.value,
+                          }))
+                        }
+                        value={provider.baseUrl}
+                      />
                     </label>
                     <label>
                       <span>Status</span>
@@ -1035,7 +1044,16 @@ export function App(): ReactElement | null {
                 </label>
                 <label>
                   <span>Endpoint</span>
-                  <input readOnly value={provider.baseUrl} />
+                  <input
+                    aria-label="Provider endpoint"
+                    onChange={(event) =>
+                      setProvider((current) => ({
+                        ...current,
+                        baseUrl: event.target.value,
+                      }))
+                    }
+                    value={provider.baseUrl}
+                  />
                 </label>
                 <label>
                   <span>Status</span>

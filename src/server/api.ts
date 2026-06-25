@@ -137,9 +137,13 @@ export function createApp(): Express {
 
   app.get(
     '/api/health',
-    asyncRoute(async (_request, response) => {
+    asyncRoute(async (request, response) => {
       try {
-        const models = await listModels(DEFAULT_PROVIDER);
+        const baseUrl =
+          typeof request.query.baseUrl === 'string'
+            ? normalizeBaseUrl(request.query.baseUrl)
+            : DEFAULT_PROVIDER.baseUrl;
+        const models = await listModels({ baseUrl });
         const selectedModel = models.find((model) => model.selected)?.id;
         response.json({
           gemma4Found: models.some((model) => hasGemmaFour(model.id)),

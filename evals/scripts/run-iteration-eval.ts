@@ -42,6 +42,10 @@ const reportPath = path.join(projectRoot, 'docs/reports/eval-findings.md');
 const apiBaseUrl =
   process.env.STYLEMAKAR_API_BASE_URL ?? 'http://127.0.0.1:5174';
 const evalModel = process.env.STYLEMAKAR_EVAL_MODEL;
+const evalProviderId =
+  process.env.STYLEMAKAR_EVAL_PROVIDER_ID ??
+  process.env.STYLEMAKAR_EVAL_BASE_URL ??
+  'lmstudio';
 const evalReasoningEffort =
   process.env.STYLEMAKAR_EVAL_REASONING_EFFORT ?? 'none';
 const iterationLimits = [0, 1, 2];
@@ -103,7 +107,7 @@ async function postEvalRequest(
         runMeaningCheck: true,
       },
       model: evalModel,
-      providerId: 'lmstudio',
+      providerId: evalProviderId,
       source: testCase.source,
       styleProfileId: testCase.styleProfileId,
     }),

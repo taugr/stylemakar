@@ -38,6 +38,12 @@ Check LM Studio and selected model:
 curl http://127.0.0.1:5174/api/health
 ```
 
+Check a custom OpenAI-compatible endpoint:
+
+```bash
+curl 'http://127.0.0.1:5174/api/health?baseUrl=http://localhost:11434/v1'
+```
+
 Run the rewrite pipeline without using the UI:
 
 ```bash
@@ -45,6 +51,9 @@ curl -X POST http://127.0.0.1:5174/api/rewrite \
   -H 'Content-Type: application/json' \
   --data '{
     "document": "Our platform leverages advanced AI to improve workflows.",
+    "provider": {
+      "baseUrl": "http://localhost:1234/v1"
+    },
     "options": {
       "includeDebug": true
     }

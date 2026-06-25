@@ -9,3 +9,5 @@ output/
 design/mobile-ux-review/*.png
 src-tauri/gen/
 src-tauri/target/
+docs/.vitepress/cache/
+docs/.vitepress/dist/

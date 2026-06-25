@@ -162,6 +162,21 @@ describe('api', () => {
     );
   });
 
+  it('checks health against a configured provider endpoint', async () => {
+    const lmStudioBaseUrl = `${await listen(createFakeLmStudio())}/v1`;
+    const appBaseUrl = await listenApp(createApp());
+    const response = await fetch(
+      `${appBaseUrl}/api/health?baseUrl=${encodeURIComponent(lmStudioBaseUrl)}`,
+    );
+
+    expect(response.ok).toBe(true);
+    await expect(response.json()).resolves.toMatchObject({
+      lmStudioReachable: true,
+      model: 'lmstudio/gemma-4-test',
+      ok: true,
+    });
+  });
+
   it('runs /api/eval/rewrite with fixed eval profiles and debug output', async () => {
     const lmStudioBaseUrl = `${await listen(createFakeLmStudio())}/v1`;
     const appBaseUrl = await listenApp(createApp());

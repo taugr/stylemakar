@@ -25,10 +25,12 @@ export type HealthResponse = {
   status: string;
 };
 
-export async function getHealth(): Promise<HealthResponse> {
+export async function getHealth(
+  provider: Partial<ModelProviderSettings> = DEFAULT_PROVIDER,
+): Promise<HealthResponse> {
   if (isTauriRuntime()) {
     try {
-      return await getTauriHealth(DEFAULT_PROVIDER);
+      return await getTauriHealth(provider);
     } catch (error) {
       return {
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -41,20 +43,36 @@ export async function getHealth(): Promise<HealthResponse> {
     }
   }
 
-  const response = await fetch('/api/health');
+  const params = new URLSearchParams();
+
+  if (provider.baseUrl) {
+    params.set('baseUrl', provider.baseUrl);
+  }
+
+  const query = params.toString();
+  const response = await fetch(`/api/health${query ? `?${query}` : ''}`);
   return (await response.json()) as HealthResponse;
 }
 
-export async function getModels(): Promise<ModelInfo[]> {
+export async function getModels(
+  provider: Partial<ModelProviderSettings> = DEFAULT_PROVIDER,
+): Promise<ModelInfo[]> {
   if (isTauriRuntime()) {
     try {
-      return await getTauriModels(DEFAULT_PROVIDER);
+      return await getTauriModels(provider);
     } catch {
       return [];
     }
   }
 
-  const response = await fetch('/api/models');
+  const params = new URLSearchParams();
+
+  if (provider.baseUrl) {
+    params.set('baseUrl', provider.baseUrl);
+  }
+
+  const query = params.toString();
+  const response = await fetch(`/api/models${query ? `?${query}` : ''}`);
 
   if (!response.ok) {
     return [];

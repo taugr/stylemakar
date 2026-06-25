@@ -35,6 +35,9 @@
     "desktop:build": "tauri build",
     "desktop:check": "pnpm typecheck && cargo check --manifest-path src-tauri/Cargo.toml",
     "desktop:dev": "tauri dev",
+    "docs:build": "vitepress build docs",
+    "docs:dev": "vitepress dev docs",
+    "docs:preview": "vitepress preview docs",
     "start": "tsx src/server/index.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -69,7 +72,9 @@
     "oxlint-tsgolint": "^0.23.0",
     "promptfoo": "^0.121.13",
     "typescript": "^5.7.2",
-    "vitest": "^3.0.0"
+    "vitepress": "^1.6.4",
+    "vitest": "^3.0.0",
+    "vitepress-plugin-group-icons": "^1.7.5"
   },
   "lint-staged": {
     "*": "oxfmt --no-error-on-unmatched-pattern"
