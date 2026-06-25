@@ -3,10 +3,16 @@ dist/
 .pnpm-store/
 .DS_Store
 *.log
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
 evals/.seeded-eval-data.json
 evals/results/
 output/
-design/mobile-ux-review/*.png
+docs/design/mobile-ux-review/*.png
 src-tauri/gen/
 src-tauri/target/
 docs/.vitepress/cache/

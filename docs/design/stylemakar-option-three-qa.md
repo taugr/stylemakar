@@ -5,7 +5,7 @@ final result: passed
 ## Reference
 
 - Selected visual target: option three, "Focus Flow".
-- Reference image: `/Users/tomauger/.codex/generated_images/019ece99-4b02-7441-9f08-e1cff3d29ed9/ig_022d37c2a14f2f9a016a30ce2087d48191b537802a5910c37d.png`
+- Reference image: `docs/design/stylemakar-option-three-reference.png`
 - Implemented screenshot: `output/playwright/stylemakar-option-three-desktop.png`
 
 ## Visual Match

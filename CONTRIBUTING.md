@@ -1,4 +1,4 @@
-# Contributing to stylemakar
+# Contributing to StyleMakar
 
 Thanks for contributing.
 
@@ -7,22 +7,23 @@ Thanks for contributing.
 Requirements:
 
 - Node.js 22.13+
-- `pnpm` 11+
+- pnpm 9+
 
 Clone the repo and install dependencies:
 
 ```bash
-git clone https://github.com/tom-auger/stylemakar.git
+git clone https://github.com/taugr/stylemakar.git
 cd stylemakar
 pnpm install
 ```
 
-This repo is a TypeScript package. Inspect `src/`, `tests/`, and `README.md` before changing public behavior.
+This repo is a TypeScript app. Inspect `src/`, `evals/`, `docs/`, and `README.md` before changing public behavior.
 
 ## Common Commands
 
 ```bash
 pnpm run test
+pnpm run typecheck
 pnpm run lint
 pnpm run format
 pnpm run build
@@ -38,14 +39,15 @@ pnpm run test:watch
 
 ## Workflow
 
-1. Make changes under `src/` and add or update focused tests under `tests/`.
+1. Make app changes under `src/` and add or update focused colocated `*.test.ts` files.
 2. Run the narrowest relevant test first, then `pnpm run test`.
 3. Run `pnpm run lint`, `pnpm run format`, and `pnpm run build` before opening a PR.
 4. Update `README.md` when user-facing commands, installation, or workflows change.
+5. Update `docs/` and run `pnpm docs:build` when documentation behavior changes.
 
 ## Testing
 
-Tests live under `tests/`.
+Tests are colocated with implementation files as `*.test.ts`.
 
 Run the full suite:
 
@@ -58,7 +60,8 @@ pnpm run test
 - Keep changes focused.
 - Add tests for behavior changes.
 - Prefer updating documentation in the same PR when user-facing behavior changes.
+- Keep generated output, eval results, screenshots, and local provider artifacts out of git unless they are intentional docs assets.
 
 ## Questions
 
-Open an issue at [https://github.com/tom-auger/stylemakar/issues](https://github.com/tom-auger/stylemakar/issues).
+Open an issue at [https://github.com/taugr/stylemakar/issues](https://github.com/taugr/stylemakar/issues).

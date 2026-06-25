@@ -17,6 +17,39 @@
   // Package rules for different update schedules
   packageRules: [
     {
+      description: 'Wait one day before updating npm packages',
+      matchDatasources: ['npm'],
+      minimumReleaseAge: '1 day',
+      internalChecksFilter: 'strict',
+    },
+    {
+      description: 'Let pnpm validate minimum release age for lockfile maintenance updates',
+      matchDatasources: ['npm'],
+      matchUpdateTypes: ['lockFileMaintenance'],
+      minimumReleaseAge: null,
+      prBodyNotes: [
+        "Renovate's lock file maintenance updates are controlled by the package manager. Confirm pnpm's minimumReleaseAge validation before merging.",
+      ],
+    },
+    {
+      description: 'Renovate cannot currently validate minimum release age for package replacements',
+      matchDatasources: ['npm'],
+      matchUpdateTypes: ['replacement'],
+      minimumReleaseAge: null,
+      prBodyNotes: [
+        "Renovate's package replacement updates cannot currently validate minimum release age. Manually confirm package age before merging.",
+      ],
+    },
+    {
+      description: 'Renovate cannot currently validate minimum release age for package pinning',
+      matchDatasources: ['npm'],
+      matchUpdateTypes: ['pin'],
+      minimumReleaseAge: null,
+      prBodyNotes: [
+        "Renovate's package pinning updates cannot currently validate minimum release age. Manually confirm package age before merging.",
+      ],
+    },
+    {
       description: 'Update dependencies every morning',
       matchDepTypes: [
         'dependencies',

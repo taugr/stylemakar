@@ -2,7 +2,7 @@
 
 Date: 2026-06-16
 Target viewport: 390 x 844
-Visual target: [hybrid-mobile-layout.png](hybrid-mobile-layout.png)
+Visual target: hybrid mobile layout QA artifact, not tracked with the docs site.
 
 ## Goal
 

@@ -2,7 +2,7 @@
 
 If you believe you have found a security vulnerability in `stylemakar`, please use GitHub's private vulnerability reporting flow:
 
-[Report a vulnerability](https://github.com/tom-auger/stylemakar/security)
+[Report a vulnerability](https://github.com/taugr/stylemakar/security)
 
 Please do not open public issues for suspected vulnerabilities.
 

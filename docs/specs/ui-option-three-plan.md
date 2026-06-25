@@ -42,6 +42,6 @@ Implement the selected "Focus Flow" direction as the app's primary UI: a friendl
      - rewrite button disabled/enabled state is correct
      - copy/export controls remain accessible
 
-4. Create `design-qa.md`.
+4. Create `docs/design/stylemakar-option-three-qa.md`.
    - Compare the rendered app against the selected option-three visual.
    - Record pass/fail and any remaining polish notes.

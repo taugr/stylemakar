@@ -309,15 +309,15 @@ providers:
       headers:
         content-type: application/json
       body:
-        source: "{{source}}"
-        styleProfileId: "{{styleProfileId}}"
-        providerId: "{{providerId}}"
-        model: "{{model}}"
+        source: '{{source}}'
+        styleProfileId: '{{styleProfileId}}'
+        providerId: '{{providerId}}'
+        model: '{{model}}'
         options:
           maxRewriteIterations: 2
           runMeaningCheck: true
           runFinalSmoothing: true
-      transformResponse: "json.finalText"
+      transformResponse: 'json.finalText'
 
 tests: file://cases.yaml
 ```
@@ -543,11 +543,11 @@ student-feedback
 
 ```yaml
 - type: contains
-  value: "June 2026"
+  value: 'June 2026'
   metric: date_preserved
 
 - type: contains
-  value: "42"
+  value: '42'
   metric: number_preserved
 
 - type: llm-rubric
@@ -603,15 +603,15 @@ It should not preserve the inflated phrasing.
 
 ```yaml
 - type: not-contains
-  value: "It is important to note"
+  value: 'It is important to note'
   metric: removed_generic_phrase
 
 - type: not-contains
-  value: "robust and comprehensive"
+  value: 'robust and comprehensive'
   metric: removed_inflated_phrase
 
 - type: not-contains
-  value: "seamless user experience"
+  value: 'seamless user experience'
   metric: removed_marketing_phrase
 
 - type: javascript
@@ -830,11 +830,11 @@ The heading and bullet structure should remain intact.
 
 ```yaml
 - type: contains
-  value: "#"
+  value: '#'
   metric: heading_preserved
 
 - type: contains
-  value: "-"
+  value: '-'
   metric: bullets_preserved
 
 - type: llm-rubric
@@ -858,7 +858,7 @@ The JSON code block must remain unchanged.
 
 ### Source Text
 
-~~~markdown
+````markdown
 The provider config should use an OpenAI-compatible endpoint.
 
 ```json
@@ -869,7 +869,7 @@ The provider config should use an OpenAI-compatible endpoint.
 ```
 
 The surrounding explanation can be rewritten, but the JSON block should not change.
-~~~
+````
 
 ### Style Profile
 
@@ -891,11 +891,11 @@ The JSON code block must remain unchanged.
   metric: code_blocks_preserved
 
 - type: contains
-  value: "http://localhost:1234/v1"
+  value: 'http://localhost:1234/v1'
   metric: endpoint_preserved
 
 - type: contains
-  value: "qwen3-14b"
+  value: 'qwen3-14b'
   metric: model_name_preserved
 ```
 
@@ -911,7 +911,7 @@ Create:
 
 Implementation idea:
 
-```js
+````js
 function extractCodeBlocks(text) {
   const regex = /```[\s\S]*?```/g;
   return text.match(regex) || [];
@@ -931,11 +931,11 @@ module.exports = function preserveCodeBlocks(output, context) {
     pass,
     score: pass ? 1 : 0,
     reason: pass
-      ? "Code blocks were preserved."
-      : "Code blocks changed or were not preserved."
+      ? 'Code blocks were preserved.'
+      : 'Code blocks changed or were not preserved.',
   };
 };
-```
+````
 
 ---
 
@@ -951,31 +951,29 @@ Implementation idea:
 
 ```js
 const bannedPhrases = [
-  "it is important to note",
-  "robust and comprehensive",
-  "delve into",
-  "leverage",
-  "seamless user experience",
-  "in conclusion",
+  'it is important to note',
+  'robust and comprehensive',
+  'delve into',
+  'leverage',
+  'seamless user experience',
+  'in conclusion',
   "in today's fast-paced world",
-  "unlock the power of",
-  "a testament to"
+  'unlock the power of',
+  'a testament to',
 ];
 
 module.exports = function noGenericAi(output) {
   const lower = output.toLowerCase();
 
-  const matches = bannedPhrases.filter((phrase) =>
-    lower.includes(phrase)
-  );
+  const matches = bannedPhrases.filter((phrase) => lower.includes(phrase));
 
   return {
     pass: matches.length === 0,
     score: matches.length === 0 ? 1 : 0,
     reason:
       matches.length === 0
-        ? "No banned generic AI phrases found."
-        : `Found banned phrases: ${matches.join(", ")}`
+        ? 'No banned generic AI phrases found.'
+        : `Found banned phrases: ${matches.join(', ')}`,
   };
 };
 ```
@@ -997,9 +995,9 @@ Example case variables:
 ```yaml
 vars:
   requiredTerms:
-    - "June 2026"
-    - "42"
-    - "Aram"
+    - 'June 2026'
+    - '42'
+    - 'Aram'
 ```
 
 Implementation idea:
@@ -1008,17 +1006,15 @@ Implementation idea:
 module.exports = function preserveRequiredTerms(output, context) {
   const requiredTerms = context.vars.requiredTerms || [];
 
-  const missing = requiredTerms.filter((term) =>
-    !output.includes(term)
-  );
+  const missing = requiredTerms.filter((term) => !output.includes(term));
 
   return {
     pass: missing.length === 0,
     score: missing.length === 0 ? 1 : 0,
     reason:
       missing.length === 0
-        ? "All required terms were preserved."
-        : `Missing required terms: ${missing.join(", ")}`
+        ? 'All required terms were preserved.'
+        : `Missing required terms: ${missing.join(', ')}`,
   };
 };
 ```

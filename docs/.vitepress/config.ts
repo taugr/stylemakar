@@ -45,6 +45,17 @@ export default defineConfig({
       { link: '/guide/getting-started', text: 'Getting Started' },
       { link: '/guide/providers', text: 'Providers' },
       { link: '/guide/tutorials', text: 'Tutorials' },
+      {
+        items: [
+          { link: '/design/stylemakar-option-three-qa', text: 'Design QA' },
+          { link: '/specs/evals', text: 'Eval Spec' },
+          {
+            link: '/design/mobile-ux-review/review',
+            text: 'Mobile UX Review',
+          },
+        ],
+        text: 'Project Notes',
+      },
       { link: '/guide/reference', text: 'Reference' },
       {
         items: [{ link: repoUrl, text: `stylemakar v${pkg.version}` }],
@@ -68,6 +79,44 @@ export default defineConfig({
             { link: '/guide/development', text: 'Development' },
           ],
           text: 'Guide',
+        },
+      ],
+      '/design/': [
+        {
+          collapsed: false,
+          items: [
+            {
+              link: '/design/stylemakar-option-three-qa',
+              text: 'Option Three QA',
+            },
+            {
+              link: '/design/mobile-ux-review/review',
+              text: 'Mobile UX Review',
+            },
+            {
+              link: '/design/mobile-ux-review/hybrid-mobile-plan',
+              text: 'Hybrid Mobile Plan',
+            },
+          ],
+          text: 'Design',
+        },
+      ],
+      '/specs/': [
+        {
+          collapsed: false,
+          items: [
+            { link: '/specs/evals', text: 'Eval Harness' },
+            {
+              link: '/specs/student-feedback-meaning-policy',
+              text: 'Student Feedback Meaning Policy',
+            },
+            { link: '/specs/tauri-desktop-app-plan', text: 'Desktop App Plan' },
+            {
+              link: '/specs/ui-option-three-plan',
+              text: 'Option Three UI Plan',
+            },
+          ],
+          text: 'Specs',
         },
       ],
     },

@@ -6,11 +6,8 @@ Source: local app at `http://127.0.0.1:5173`
 
 ## Screenshots
 
-1. [Initial mobile viewport](01-mobile-initial.png)
-2. [Source editing, full page](02-mobile-source-editing-full.png)
-3. [Advanced checks open, full page](03-mobile-advanced-open-full.png)
-4. [Rewrite loading, full page](04-mobile-after-rewrite-full.png)
-5. [Rewrite still loading, full page](05-mobile-rewrite-settled-full.png)
+The original screenshots for this review were local QA artifacts and are not
+tracked with the docs site.
 
 ## Step Health
 
