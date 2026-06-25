@@ -1,0 +1,79 @@
+name: release desktop prototype
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  macos-dmg:
+    name: build unsigned macOS DMG
+    runs-on: macos-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v6
+
+      - name: setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: verify release tag matches package version
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          TAG="${GITHUB_REF_NAME}"
+          if [ "${TAG}" != "v${VERSION}" ]; then
+            echo "Release tag ${TAG} does not match package version v${VERSION}."
+            exit 1
+          fi
+
+      - name: run quality gates
+        run: |
+          pnpm format
+          pnpm lint
+          pnpm test
+          pnpm typecheck
+          pnpm desktop:check
+
+      - name: build unsigned DMG
+        run: pnpm desktop:bundle:mac
+
+      - name: collect release artifact path
+        id: artifact
+        run: |
+          DMG_PATH="$(find src-tauri/target/release/bundle/dmg -maxdepth 1 -name '*.dmg' -print -quit)"
+          if [ -z "${DMG_PATH}" ]; then
+            echo "No DMG artifact found."
+            exit 1
+          fi
+          echo "path=${DMG_PATH}" >> "${GITHUB_OUTPUT}"
+
+      - name: create or update release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          if ! gh release view "${TAG}" >/dev/null 2>&1; then
+            gh release create "${TAG}" \
+              --title "StyleMakar ${TAG}" \
+              --notes "Unsigned prototype macOS DMG. macOS Gatekeeper warnings are expected."
+          fi
+
+      - name: upload DMG to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          DMG_PATH: ${{ steps.artifact.outputs.path }}
+        run: gh release upload "${TAG}" "${DMG_PATH}" --clobber

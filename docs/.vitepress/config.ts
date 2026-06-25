@@ -105,6 +105,10 @@ export default defineConfig({
         {
           collapsed: false,
           items: [
+            {
+              link: '/specs/app-release-readiness-checklist',
+              text: 'App Release Readiness',
+            },
             { link: '/specs/evals', text: 'Eval Harness' },
             {
               link: '/specs/student-feedback-meaning-policy',

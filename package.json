@@ -32,6 +32,7 @@
     "eval:smoke": "pnpm eval:seed && promptfoo eval -c evals/promptfoo-smoke.yaml",
     "eval:view": "promptfoo view",
     "build": "tsc --noEmit && vite build",
+    "desktop:bundle:mac": "node scripts/build-unsigned-macos-dmg.mjs",
     "desktop:build": "tauri build",
     "desktop:check": "pnpm typecheck && cargo check --manifest-path src-tauri/Cargo.toml",
     "desktop:dev": "tauri dev",

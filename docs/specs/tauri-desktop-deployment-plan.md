@@ -4,13 +4,15 @@
 
 StyleMakar should ship first as a local-first Tauri desktop app, not as a hosted web app. The app is intended to work with local and user-owned OpenAI-compatible providers, so deployment should optimize for a normal installable desktop experience, localhost provider access, private document handling, and user-controlled credentials.
 
-The recommended path is:
+The prototype path is:
 
-1. Ship unsigned or ad hoc internal `.app` builds only for developer testing.
-2. Ship the first user-facing macOS release as a signed and notarized `.dmg`.
-3. Publish releases through GitHub Releases.
-4. Add automatic updates after the release process and provider settings are stable.
-5. Add Windows and Linux packaging after the macOS path is repeatable.
+1. Ship unsigned internal `.dmg` builds for prototype testing.
+2. Document macOS Gatekeeper limitations clearly.
+3. Use signed and notarized `.dmg` builds only if Apple Developer credentials
+   become available later.
+4. Publish prototype artifacts through a tag-triggered GitHub Release workflow.
+5. Add automatic updates, Windows, and Linux packaging after the prototype
+   release path is stable.
 
 ## Current State
 
@@ -18,14 +20,16 @@ The repo currently has:
 
 - Tauri v2 scaffold in `src-tauri/`.
 - `pnpm desktop:dev`, `pnpm desktop:build`, and `pnpm desktop:check` scripts.
-- macOS `.app` bundle output from `pnpm desktop:build`.
+- macOS `.app` bundle output from Tauri.
+- Unsigned macOS `.dmg` prototype output from `pnpm desktop:bundle:mac`.
+- A tag-triggered GitHub Actions workflow that uploads the unsigned DMG to the
+  matching GitHub Release.
 - A frontend runtime adapter that uses Tauri commands inside the desktop app.
 - Rust commands for OpenAI-compatible `GET /models` and `POST /chat/completions`.
 - Verified local LM Studio flow with `google/gemma-4-12b-qat`.
 
 The repo does not yet have:
 
-- DMG bundle output.
 - Production app icon configuration.
 - Code signing configuration.
 - Apple notarization configuration.
@@ -38,15 +42,16 @@ The repo does not yet have:
 
 ### Primary Channel: Direct Desktop Download
 
-Use a direct download model for the first real release:
+Use a direct download model for prototype releases:
 
-- Build a macOS `.dmg`.
-- Sign and notarize it.
+- Build an unsigned macOS `.dmg`.
 - Attach it to a GitHub Release.
 - Document LM Studio and Ollama setup in the release notes.
+- Document that macOS will warn about the unsigned app.
 - Document remote provider support only after API-key storage is implemented.
 
-This avoids App Store review friction and keeps the release process appropriate for a developer/productivity tool that needs local provider access.
+This avoids App Store review friction and keeps the release process appropriate
+for a prototype developer/productivity tool that needs local provider access.
 
 ### Secondary Channel: Auto-Update
 
@@ -64,7 +69,10 @@ Goal: Produce the right local artifacts for macOS distribution.
 
 Required changes:
 
-- Update `src-tauri/tauri.conf.json` bundle targets from `["app"]` to `["app", "dmg"]`.
+- Keep `src-tauri/tauri.conf.json` bundle targets set to `["app"]` for the
+  Tauri app bundle.
+- Use `scripts/build-unsigned-macos-dmg.mjs` to package the `.app` into an
+  unsigned prototype DMG without Apple Developer credentials.
 - Add production icon files and configure them in `bundle.icon`.
 - Verify app metadata:
   - `productName`
@@ -79,14 +87,15 @@ Suggested scripts:
 
 ```json
 {
-  "desktop:bundle": "tauri build",
-  "desktop:bundle:mac": "tauri build --bundles app,dmg"
+  "desktop:bundle:mac": "node scripts/build-unsigned-macos-dmg.mjs"
 }
 ```
 
 Acceptance criteria:
 
 - `pnpm desktop:bundle:mac` creates both `.app` and `.dmg` artifacts.
+- Pushing a tag that matches `v${package.json.version}` creates or updates a
+  GitHub Release and uploads the unsigned DMG.
 - The app launches from the built `.app`.
 - The app can be installed from the `.dmg`.
 - The built app can discover LM Studio models.
@@ -95,6 +104,9 @@ Acceptance criteria:
 ## Phase 2: Apple Developer Signing and Notarization
 
 Goal: Make macOS builds open cleanly on user machines.
+
+Status: deferred for the prototype because Apple Developer credentials are not
+available.
 
 Required setup:
 
