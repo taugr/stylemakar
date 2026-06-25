@@ -54,9 +54,10 @@ This track is deferred while StyleMakar is distributed as an unsigned prototype.
 - [x] Run release workflow gates before packaging:
       `pnpm format`, `pnpm lint`, `pnpm test`, `pnpm typecheck`,
       `pnpm desktop:check`, and the desktop bundle build.
-- [ ] Attach the `.dmg` to a GitHub Release with release notes.
-- [ ] Verify the downloaded DMG opens on a clean macOS machine without avoidable
-      Gatekeeper warnings.
+- [x] Attach the `.dmg` to a GitHub Release with release notes.
+- [x] Verify the downloaded release DMG checksum and mounted contents.
+- [ ] Verify the downloaded DMG opens on a clean macOS machine with the expected
+      unsigned-app Gatekeeper warning.
 - [ ] Verify the installed app can discover local LM Studio models.
 - [ ] Verify the installed app can complete a short rewrite.
 
