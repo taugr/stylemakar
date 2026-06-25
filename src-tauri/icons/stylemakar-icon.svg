@@ -1,31 +1,77 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
-  <rect width="1024" height="1024" rx="224" fill="#f8fafc" />
-  <rect
-    x="112"
-    y="112"
-    width="800"
-    height="800"
-    rx="176"
-    fill="#ffffff"
-    stroke="#dbe4ee"
-    stroke-width="28"
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <defs>
+    <linearGradient id="paperGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#f8f9fa" />
+    </linearGradient>
+    <linearGradient id="highlightGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#fde047" />
+      <stop offset="100%" stop-color="#fef08a" />
+    </linearGradient>
+    <filter id="docShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow
+        dx="2"
+        dy="4"
+        stdDeviation="3"
+        flood-color="#0f172a"
+        flood-opacity="0.15"
+      />
+    </filter>
+  </defs>
+
+  <path
+    d="M 25 15 L 75 15 L 95 35 L 95 105 A 5 5 0 0 1 90 110 L 30 110 A 5 5 0 0 1 25 105 Z"
+    fill="url(#paperGrad)"
+    stroke="#1e293b"
+    stroke-width="4"
+    stroke-linejoin="round"
+    filter="url(#docShadow)"
   />
   <path
-    d="M284 644c62 66 143 99 244 99 59 0 107-11 145-34 40-24 60-57 60-99 0-40-15-72-46-97-28-23-73-43-134-59l-83-22c-45-12-77-24-96-37-18-13-27-31-27-53 0-28 15-50 45-67 30-18 69-27 117-27 72 0 136 22 192 67l42-88c-61-50-139-75-234-75-61 0-111 12-151 37-47 29-70 70-70 124 0 43 15 77 45 101 28 23 73 43 136 59l82 21c45 12 77 24 96 38 18 13 27 31 27 54 0 26-13 47-39 62-27 16-62 24-106 24-80 0-147-27-202-80l-41 91Z"
-    fill="#17324d"
+    d="M 75 15 L 75 35 L 95 35 Z"
+    fill="#e2e8f0"
+    stroke="#1e293b"
+    stroke-width="4"
+    stroke-linejoin="round"
   />
   <path
-    d="M269 769 777 261"
+    d="M 38 42 Q 42 38, 46 42 T 54 41 T 62 44 T 70 41 T 78 43"
     fill="none"
-    stroke="#2563eb"
+    stroke="#94a3b8"
+    stroke-width="4"
     stroke-linecap="round"
-    stroke-width="68"
   />
   <path
-    d="M711 206 818 313"
+    d="M 38 56 Q 44 52, 50 57 T 62 54 T 68 57"
     fill="none"
-    stroke="#14b8a6"
+    stroke="#94a3b8"
+    stroke-width="4"
     stroke-linecap="round"
-    stroke-width="68"
+  />
+  <path
+    d="M 15 65 Q 30 65, 30 50 Q 30 65, 45 65 Q 30 65, 30 80 Q 30 65, 15 65 Z"
+    fill="#3b82f6"
+    stroke="#1d4ed8"
+    stroke-width="2"
+    stroke-linejoin="round"
+  />
+  <rect x="36" y="73" width="50" height="12" rx="3" fill="url(#highlightGrad)" />
+  <line
+    x1="39"
+    y1="79"
+    x2="83"
+    y2="79"
+    stroke="#1e293b"
+    stroke-width="4"
+    stroke-linecap="round"
+  />
+  <line
+    x1="39"
+    y1="95"
+    x2="65"
+    y2="95"
+    stroke="#1e293b"
+    stroke-width="4"
+    stroke-linecap="round"
   />
 </svg>
