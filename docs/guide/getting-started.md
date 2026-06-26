@@ -4,7 +4,7 @@ This guide gets the StyleMakar web app running against a local OpenAI-compatible
 
 ## Requirements
 
-- Node.js `>=22.0.0`
+- Node.js `>=22.22.1`
 - pnpm `11.9.0`
 - LM Studio or another OpenAI-compatible provider
 - A loaded model, ideally a Gemma 4 model for the current default path

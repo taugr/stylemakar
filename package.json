@@ -67,7 +67,7 @@
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "husky": "^9.1.7",
-    "lint-staged": "^15.5.2",
+    "lint-staged": "^17.0.8",
     "oxfmt": "^0.56.0",
     "oxlint": "^1.71.0",
     "oxlint-tsgolint": "^0.23.0",
@@ -81,7 +81,7 @@
     "*": "oxfmt --no-error-on-unmatched-pattern"
   },
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=22.22.1"
   },
   "packageManager": "pnpm@11.9.0"
 }
