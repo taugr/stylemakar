@@ -313,7 +313,7 @@ export function createApp(): Express {
 
   const clientDist = path.resolve(projectRoot, 'dist/client');
   app.use(express.static(clientDist));
-  app.get('*', (_request, response) => {
+  app.get('/{*splat}', (_request, response) => {
     response.sendFile(path.join(clientDist, 'index.html'));
   });
 
