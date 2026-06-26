@@ -5,3 +5,8 @@ minimumReleaseAge: 1440
 minimumReleaseAgeStrict: true
 minimumReleaseAgeIgnoreMissingTime: false
 blockExoticSubdeps: true
+
+overrides:
+  '@docsearch/js': 4.6.3
+  'mongodb>gcp-metadata': '-'
+  'nunjucks>chokidar': '-'
