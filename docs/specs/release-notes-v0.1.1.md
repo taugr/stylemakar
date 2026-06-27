@@ -23,20 +23,20 @@ Unsigned prototype macOS build for trusted testing.
 
 ## Verification Checklist
 
-- [ ] `pnpm install --frozen-lockfile --ignore-scripts`
-- [ ] `pnpm format`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm typecheck`
-- [ ] `pnpm docs:build`
-- [ ] `pnpm build`
-- [ ] `pnpm desktop:check`
-- [ ] `pnpm desktop:bundle:mac`
-- [ ] DMG checksum is valid with `hdiutil verify`.
-- [ ] DMG mounts and contains `StyleMakar.app` plus an `Applications` symlink.
-- [ ] Built app launches.
-- [ ] LM Studio model discovery works.
-- [ ] A short rewrite completes with LM Studio.
+- [x] `pnpm install --frozen-lockfile`
+- [x] `pnpm format`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `pnpm typecheck`
+- [x] `pnpm docs:build`
+- [x] `pnpm build`
+- [x] `pnpm desktop:check`
+- [x] `pnpm desktop:bundle:mac`
+- [x] DMG checksum is valid with `hdiutil verify`.
+- [x] DMG mounts and contains `StyleMakar.app` plus an `Applications` symlink.
+- [x] Built app launches.
+- [x] LM Studio model discovery works.
+- [x] A short rewrite completes with LM Studio.
 
 ## Known Limitations
 

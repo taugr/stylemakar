@@ -8,6 +8,8 @@ on:
 
 permissions:
   contents: read
+  id-token: write
+  pages: write
 
 concurrency:
   group: pages
@@ -39,6 +41,8 @@ jobs:
 
       - name: configure pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: upload artifact
         uses: actions/upload-pages-artifact@v4
