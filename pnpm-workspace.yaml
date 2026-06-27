@@ -6,13 +6,13 @@ minimumReleaseAgeStrict: true
 minimumReleaseAgeIgnoreMissingTime: false
 blockExoticSubdeps: true
 
-onlyBuiltDependencies:
-  - '@playwright/browser-chromium'
-  - '@swc/core'
-  - esbuild
-  - onnxruntime-node
-  - protobufjs
-  - sharp
+allowBuilds:
+  '@playwright/browser-chromium': true
+  '@swc/core': true
+  esbuild: true
+  onnxruntime-node: true
+  protobufjs: true
+  sharp: true
 
 overrides:
   '@docsearch/js': 4.6.3
