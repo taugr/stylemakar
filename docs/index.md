@@ -6,8 +6,8 @@ hero:
   text: Local-first style rewriting
   tagline: Rewrite drafts into a target voice while preserving meaning, constraints, and concrete details.
   image:
-    src: /screenshots/workspace-desktop.png
-    alt: StyleMakar rewrite workspace
+    src: /logo.svg
+    alt: StyleMakar logo
   actions:
     - theme: brand
       text: Get Started

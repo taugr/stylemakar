@@ -19,6 +19,10 @@ export default defineConfig({
   cleanUrls: true,
   description,
   head: [
+    [
+      'link',
+      { href: '/stylemakar/logo.svg', rel: 'icon', type: 'image/svg+xml' },
+    ],
     ['meta', { content: description, name: 'description' }],
     ['meta', { content: 'StyleMakar', property: 'og:title' }],
     ['meta', { content: description, property: 'og:description' }],
@@ -40,6 +44,7 @@ export default defineConfig({
       copyright: 'Released under the MIT License.',
       message: 'StyleMakar documentation',
     },
+    logo: '/logo.svg',
     nav: [
       { link: '/guide/', text: 'Guide' },
       { link: '/guide/getting-started', text: 'Getting Started' },
@@ -117,6 +122,10 @@ export default defineConfig({
               text: 'Student Feedback Meaning Policy',
             },
             { link: '/specs/tauri-desktop-app-plan', text: 'Desktop App Plan' },
+            {
+              link: '/specs/tauri-desktop-deployment-plan',
+              text: 'Desktop Deployment Plan',
+            },
             {
               link: '/specs/ui-option-three-plan',
               text: 'Option Three UI Plan',

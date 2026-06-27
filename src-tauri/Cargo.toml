@@ -1,6 +1,6 @@
 [package]
 name = "stylemakar"
-version = "0.1.0"
+version = "0.1.1"
 description = "Local-first style rewriting app"
 authors = ["Tom Auger <tom@tau.gr>"]
 edition = "2021"

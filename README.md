@@ -1,15 +1,32 @@
 # StyleMakar
 
-Local-first style rewriting app for turning drafts into a target voice while preserving meaning, constraints, and concrete details.
+<p align="center">
+  <img src="./docs/public/logo.svg" alt="StyleMakar logo" width="160" />
+  <br />
+  <a href="https://github.com/taugr/stylemakar/releases/latest">
+    <img src="https://img.shields.io/github/v/release/taugr/stylemakar" alt="latest release" />
+  </a>
+  <a href="./LICENSE">
+    <img src="https://img.shields.io/github/license/taugr/stylemakar" alt="license" />
+  </a>
+  <a href="https://taugr.github.io/stylemakar/">
+    <img src="https://img.shields.io/badge/docs-GitHub%20Pages-2563eb" alt="documentation" />
+  </a>
+  <br />
+  Local-first style rewriting app for turning drafts into a target voice while preserving meaning, constraints, and concrete details.
+</p>
 
-StyleMakar is a TypeScript/Vite app with:
+> StyleMakar is a prototype. The macOS app is currently distributed as an
+> unsigned DMG for trusted testing, so Gatekeeper warnings are expected.
 
-- React writing UI
-- Express API for local development and evals
-- Tauri desktop prototype
-- OpenAI-compatible provider support
-- Promptfoo and custom eval scripts
-- VitePress docs site
+## Features
+
+- Local-first React writing workspace
+- Tauri desktop prototype for macOS
+- OpenAI-compatible provider support, verified with LM Studio
+- Meaning checks for caveats, names, numbers, code blocks, and required terms
+- Promptfoo and custom eval scripts for rewrite quality checks
+- VitePress documentation site
 
 ## Requirements
 
@@ -18,13 +35,7 @@ StyleMakar is a TypeScript/Vite app with:
 - LM Studio or another OpenAI-compatible provider
 - A loaded chat model
 
-The default provider is LM Studio at:
-
-```text
-http://localhost:1234/v1
-```
-
-## Quick Start
+## Quickstart
 
 ```sh
 pnpm install
@@ -37,11 +48,13 @@ Open the app:
 http://127.0.0.1:5173
 ```
 
-In development, Vite runs on `5173` and proxies `/api` to the Express server on `5174`.
+In development, Vite runs on `5173` and proxies `/api` to the Express server on
+`5174`.
 
 ## Provider Setup
 
-Start LM Studio's local API server, or use another provider that exposes OpenAI-compatible `GET /models` and `POST /chat/completions` endpoints.
+Start LM Studio's local API server, or use another provider that exposes
+OpenAI-compatible `GET /models` and `POST /chat/completions` endpoints.
 
 The default provider settings are:
 
@@ -53,7 +66,8 @@ The default provider settings are:
 }
 ```
 
-In the UI, expand **Advanced checks** to edit the endpoint, refresh model discovery, and select the model.
+In the UI, expand **Advanced checks** to edit the endpoint, refresh model
+discovery, and select the model.
 
 Check provider health through the local API:
 
@@ -67,6 +81,22 @@ Check a custom endpoint:
 curl 'http://127.0.0.1:5174/api/health?baseUrl=http://localhost:11434/v1'
 ```
 
+## Prototype Desktop App
+
+StyleMakar ships first as an unsigned macOS prototype DMG for trusted testers.
+Download the latest build from
+[GitHub Releases](https://github.com/taugr/stylemakar/releases/latest), then
+follow the [prototype install guide](./docs/guide/install.md).
+
+Build the desktop app locally:
+
+```sh
+pnpm desktop:check
+pnpm desktop:bundle:mac
+```
+
+The generated DMG lives under `src-tauri/target/release/bundle/dmg/`.
+
 ## Common Commands
 
 ```sh
@@ -76,23 +106,30 @@ pnpm run typecheck
 pnpm run lint
 pnpm run format
 pnpm run build
+pnpm docs:build
+pnpm desktop:check
 ```
 
 ## Docs
 
-Run the VitePress docs locally:
+The documentation site lives in `docs/` and is published with GitHub Pages:
+
+- [StyleMakar docs](https://taugr.github.io/stylemakar/)
+- [Getting started](./docs/guide/getting-started.md)
+- [Provider setup](./docs/guide/providers.md)
+- [Desktop app](./docs/guide/desktop.md)
+
+Run the docs locally:
 
 ```sh
 pnpm docs:dev
 ```
 
-Build the docs:
+Build the docs site:
 
 ```sh
 pnpm docs:build
 ```
-
-Docs source lives in `docs/`. GitHub Pages deployment is configured in `.github/workflows/pages.yml`, but Pages availability depends on the repository plan and visibility.
 
 ## API
 
@@ -118,7 +155,9 @@ curl -X POST http://127.0.0.1:5174/api/rewrite \
   }'
 ```
 
-The API rewrites paragraph-sized text, grades style fit, and checks meaning preservation. Final smoothing is off unless `options.finalSmoothing` is set to `true`.
+The API rewrites paragraph-sized text, grades style fit, and checks meaning
+preservation. Final smoothing is off unless `options.finalSmoothing` is set to
+`true`.
 
 ## Evals
 
@@ -150,28 +189,6 @@ Useful eval environment variables:
 - `STYLEMAKAR_EVAL_CASE_FILTER`
 
 Eval result artifacts are ignored under `evals/results/`.
-
-## Desktop
-
-Run the Tauri desktop app in development:
-
-```sh
-pnpm desktop:dev
-```
-
-Check the desktop build surface:
-
-```sh
-pnpm desktop:check
-```
-
-Build the desktop app:
-
-```sh
-pnpm desktop:build
-```
-
-The current desktop path is a local-first prototype. Production distribution still needs signed/notarized release packaging and provider profile hardening before public desktop release.
 
 ## Project Layout
 
@@ -206,4 +223,10 @@ For desktop changes, also run:
 
 ```sh
 pnpm desktop:check
+```
+
+Prototype release builds should also run:
+
+```sh
+pnpm desktop:bundle:mac
 ```

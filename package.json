@@ -1,6 +1,6 @@
 {
   "name": "stylemakar",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Local-first style rewriting app with an LM Studio-backed rewrite pipeline.",
   "keywords": [
     "lm-studio",

@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <defs>
+    <linearGradient id="paperGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#f8f9fa" />
+    </linearGradient>
+    <linearGradient id="highlightGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#fde047" />
+      <stop offset="100%" stop-color="#fef08a" />
+    </linearGradient>
+    <filter id="docShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow
+        dx="2"
+        dy="4"
+        stdDeviation="3"
+        flood-color="#0f172a"
+        flood-opacity="0.15"
+      />
+    </filter>
+  </defs>
+
+  <path
+    d="M 25 15 L 75 15 L 95 35 L 95 105 A 5 5 0 0 1 90 110 L 30 110 A 5 5 0 0 1 25 105 Z"
+    fill="url(#paperGrad)"
+    stroke="#1e293b"
+    stroke-width="4"
+    stroke-linejoin="round"
+    filter="url(#docShadow)"
+  />
+  <path
+    d="M 75 15 L 75 35 L 95 35 Z"
+    fill="#e2e8f0"
+    stroke="#1e293b"
+    stroke-width="4"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M 38 42 Q 42 38, 46 42 T 54 41 T 62 44 T 70 41 T 78 43"
+    fill="none"
+    stroke="#94a3b8"
+    stroke-width="4"
+    stroke-linecap="round"
+  />
+  <path
+    d="M 38 56 Q 44 52, 50 57 T 62 54 T 68 57"
+    fill="none"
+    stroke="#94a3b8"
+    stroke-width="4"
+    stroke-linecap="round"
+  />
+  <path
+    d="M 15 65 Q 30 65, 30 50 Q 30 65, 45 65 Q 30 65, 30 80 Q 30 65, 15 65 Z"
+    fill="#3b82f6"
+    stroke="#1d4ed8"
+    stroke-width="2"
+    stroke-linejoin="round"
+  />
+  <rect x="36" y="73" width="50" height="12" rx="3" fill="url(#highlightGrad)" />
+  <line
+    x1="39"
+    y1="79"
+    x2="83"
+    y2="79"
+    stroke="#1e293b"
+    stroke-width="4"
+    stroke-linecap="round"
+  />
+  <line
+    x1="39"
+    y1="95"
+    x2="65"
+    y2="95"
+    stroke="#1e293b"
+    stroke-width="4"
+    stroke-linecap="round"
+  />
+</svg>
