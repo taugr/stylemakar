@@ -17,14 +17,18 @@ hero:
       link: /guide/reference
 
 features:
-  - title: Local model workflow
+  - icon: 🧠
+    title: Local model workflow
     details: Run the web app or Tauri desktop app against LM Studio or another OpenAI-compatible endpoint.
-  - title: Meaning checks
+  - icon: ✅
+    title: Meaning checks
     details: Preserve caveats, names, numbers, code blocks, and required terms during rewrite attempts.
-  - title: Style examples
+  - icon: ✍️
+    title: Style examples
     details: Use reference examples and a style profile to shape the rewritten output.
-  - title: Eval harness
-    details: Exercise the real pipeline through Promptfoo and focused iteration scripts.
+  - icon: 💻
+    title: Desktop prototype
+    details: Use the same writing workspace in the packaged macOS prototype when you want an app instead of a browser tab.
 ---
 
 ## Workspace Preview
