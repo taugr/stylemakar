@@ -14,6 +14,13 @@ StyleMakar rewrites source text into a defined writing style. The app uses a loc
 
 The default setup targets LM Studio at `http://localhost:1234/v1` and a Gemma model. The provider contract is intentionally OpenAI-compatible, so LM Studio is the first practical path rather than the only intended provider.
 
+## The Name
+
+StyleMakar combines `style` with
+[`makar`](https://dsl.ac.uk/entry/dost/makar), a Scots word for a maker, author,
+or poet. The name points to the app's purpose: helping make language in a chosen
+style without losing the source text's meaning.
+
 ## Recommended First Path
 
 1. Start LM Studio and load a compatible model.

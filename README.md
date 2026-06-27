@@ -28,6 +28,14 @@
 - Promptfoo and custom eval scripts for rewrite quality checks
 - VitePress documentation site
 
+## Why StyleMakar?
+
+The name combines `style` with
+[`makar`](https://dsl.ac.uk/entry/dost/makar), a Scots word for a maker, author,
+or poet. In older Scottish literary use, a makar is someone skilled in the craft
+of making language. StyleMakar uses that idea for a writing tool: it helps
+reshape drafts into a chosen style while keeping the original meaning intact.
+
 ## Requirements
 
 - Node.js 22.22.1+

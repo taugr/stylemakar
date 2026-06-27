@@ -32,3 +32,11 @@ features:
 ![StyleMakar desktop workspace](/screenshots/workspace-desktop.png)
 
 StyleMakar is currently a developer-facing prototype with a Vite web app, Express API, Tauri desktop shell, and local evaluation harness. Start with the getting started guide, then use the tutorials to run a rewrite, call the API, or package the desktop app.
+
+## Why StyleMakar?
+
+The name combines `style` with
+[`makar`](https://dsl.ac.uk/entry/dost/makar), a Scots word for a maker, author,
+or poet. In older Scottish literary use, a makar is someone skilled in the craft
+of making language. StyleMakar uses that idea for a writing tool: it helps
+reshape drafts into a chosen style while keeping the original meaning intact.
