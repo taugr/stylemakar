@@ -20,15 +20,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 11.9.0
 
       - name: setup node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 22.22.1
           cache: pnpm
@@ -40,12 +40,12 @@ jobs:
         run: pnpm docs:build
 
       - name: configure pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
         with:
           enablement: true
 
       - name: upload artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           path: docs/.vitepress/dist
 
@@ -61,4 +61,4 @@ jobs:
     steps:
       - name: deploy to github pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
