@@ -35,6 +35,7 @@ export default defineConfig({
   sitemap: {
     hostname: siteUrl,
   },
+  srcExclude: ['design/**/*.md', 'reports/**/*.md', 'specs/**/*.md'],
   themeConfig: {
     editLink: {
       pattern: `${repoUrl}/edit/main/docs/:path`,
@@ -46,23 +47,19 @@ export default defineConfig({
     },
     logo: '/logo.svg',
     nav: [
-      { link: '/guide/', text: 'Guide' },
-      { link: '/guide/getting-started', text: 'Getting Started' },
-      { link: '/guide/install', text: 'Install' },
-      { link: '/guide/providers', text: 'Providers' },
-      { link: '/guide/tutorials', text: 'Tutorials' },
       {
         items: [
-          { link: '/design/stylemakar-option-three-qa', text: 'Design QA' },
-          { link: '/specs/evals', text: 'Eval Spec' },
-          {
-            link: '/design/mobile-ux-review/review',
-            text: 'Mobile UX Review',
-          },
+          { link: '/guide/', text: 'Overview' },
+          { link: '/guide/getting-started', text: 'Getting Started' },
+          { link: '/guide/install', text: 'Install Prototype' },
+          { link: '/guide/providers', text: 'Provider Setup' },
+          { link: '/guide/tutorials', text: 'Tutorials' },
+          { link: '/guide/desktop', text: 'Desktop App' },
+          { link: '/guide/reference', text: 'Reference' },
+          { link: '/guide/development', text: 'Development' },
         ],
-        text: 'Project Notes',
+        text: 'Guide',
       },
-      { link: '/guide/reference', text: 'Reference' },
       {
         items: [{ link: repoUrl, text: `stylemakar v${pkg.version}` }],
         text: `v${pkg.version}`,
@@ -86,56 +83,6 @@ export default defineConfig({
             { link: '/guide/development', text: 'Development' },
           ],
           text: 'Guide',
-        },
-      ],
-      '/design/': [
-        {
-          collapsed: false,
-          items: [
-            {
-              link: '/design/stylemakar-option-three-qa',
-              text: 'Option Three QA',
-            },
-            {
-              link: '/design/mobile-ux-review/review',
-              text: 'Mobile UX Review',
-            },
-            {
-              link: '/design/mobile-ux-review/hybrid-mobile-plan',
-              text: 'Hybrid Mobile Plan',
-            },
-          ],
-          text: 'Design',
-        },
-      ],
-      '/specs/': [
-        {
-          collapsed: false,
-          items: [
-            {
-              link: '/specs/app-release-readiness-checklist',
-              text: 'App Release Readiness',
-            },
-            { link: '/specs/evals', text: 'Eval Harness' },
-            {
-              link: '/specs/student-feedback-meaning-policy',
-              text: 'Student Feedback Meaning Policy',
-            },
-            { link: '/specs/tauri-desktop-app-plan', text: 'Desktop App Plan' },
-            {
-              link: '/specs/tauri-desktop-deployment-plan',
-              text: 'Desktop Deployment Plan',
-            },
-            {
-              link: '/specs/ui-option-three-plan',
-              text: 'Option Three UI Plan',
-            },
-            {
-              link: '/specs/release-notes-template',
-              text: 'Release Notes Template',
-            },
-          ],
-          text: 'Specs',
         },
       ],
     },
