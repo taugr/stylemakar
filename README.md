@@ -13,7 +13,7 @@
     <img src="https://img.shields.io/badge/docs-GitHub%20Pages-2563eb" alt="documentation" />
   </a>
   <br />
-  Local-first style rewriting app for turning drafts into a target voice while preserving meaning, constraints, and concrete details.
+  Local-first style rewriting app that simulates a human editor by iteratively rewriting sentences and paragraphs until they match a target voice while preserving meaning, constraints, and concrete details.
 </p>
 
 > StyleMakar is a prototype. The macOS app is currently distributed as an
@@ -35,6 +35,11 @@ The name combines `style` with
 or poet. In older Scottish literary use, a makar is someone skilled in the craft
 of making language. StyleMakar uses that idea for a writing tool: it helps
 reshape drafts into a chosen style while keeping the original meaning intact.
+
+The motivation is to model the way a careful human editor works: rewrite a
+sentence or paragraph, compare it against the target style, check that the
+meaning still holds, then revise again until the text fits. StyleMakar turns
+that iterative editing loop into a local-first app and CLI workflow.
 
 ## Requirements
 

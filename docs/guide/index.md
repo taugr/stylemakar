@@ -1,10 +1,12 @@
 # StyleMakar Guide
 
-StyleMakar rewrites source text into a defined writing style. The app uses a
-local-first workflow: the browser development app calls the local Express API,
-the Tauri desktop app can call an OpenAI-compatible provider through native
-commands, and the CLI can call the rewrite pipeline directly for scriptable
-rewrites.
+StyleMakar rewrites source text into a defined writing style by simulating the
+way a careful human editor works: revise a sentence or paragraph, compare it
+against the target style, check that the meaning still holds, then iterate until
+the output fits. The app uses a local-first workflow: the browser development
+app calls the local Express API, the Tauri desktop app can call an
+OpenAI-compatible provider through native commands, and the CLI can call the
+rewrite pipeline directly for scriptable rewrites.
 
 ![StyleMakar mobile source workflow](/screenshots/workspace-mobile.png)
 
@@ -15,6 +17,7 @@ rewrites.
 - **Reference examples** provide concrete samples of the target style.
 - **Provider settings** point to an OpenAI-compatible endpoint and model.
 - **Meaning checks** help prevent the rewrite from dropping or adding important claims.
+- **Rewrite iterations** retry weak style matches while preserving source meaning.
 
 The default setup targets LM Studio at `http://localhost:1234/v1` and a Gemma model. The provider contract is intentionally OpenAI-compatible, so LM Studio is the first practical path rather than the only intended provider.
 

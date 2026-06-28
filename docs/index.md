@@ -4,7 +4,7 @@ layout: home
 hero:
   name: StyleMakar
   text: Local-first style rewriting
-  tagline: Rewrite drafts into a target voice while preserving meaning, constraints, and concrete details.
+  tagline: Simulate a human editor by iteratively rewriting sentences and paragraphs until they match a target voice.
   image:
     src: /logo.svg
     alt: StyleMakar logo
@@ -35,7 +35,7 @@ features:
 
 ![StyleMakar desktop workspace](/screenshots/workspace-desktop.png)
 
-StyleMakar is currently a developer-facing prototype with a Vite web app, Express API, Tauri desktop shell, and local evaluation harness. Start with the getting started guide, then use the tutorials to run a rewrite, call the API, or package the desktop app.
+StyleMakar is currently a developer-facing prototype with a Vite web app, Express API, Tauri desktop shell, CLI, and local evaluation harness. It rewrites drafts the way a careful human editor might: revise a sentence or paragraph, compare it with the target style, check that the meaning still holds, then iterate until the output fits. Start with the getting started guide, then use the tutorials to run a rewrite, call the API, use the CLI, or package the desktop app.
 
 ## Why StyleMakar?
 
