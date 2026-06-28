@@ -42,8 +42,8 @@ export default defineConfig({
       text: 'Edit this page on GitHub',
     },
     footer: {
-      copyright: 'Released under the MIT License.',
-      message: 'StyleMakar documentation',
+      copyright: 'Copyright © 2026 Tom Auger',
+      message: 'Released under the MIT License.',
     },
     logo: '/logo.svg',
     nav: [
