@@ -7,7 +7,9 @@
 | `pnpm run dev`                | Run Vite and the API server for local web development. |
 | `pnpm run dev:api`            | Run only the Express API server.                       |
 | `pnpm run start`              | Serve the built app/API.                               |
-| `pnpm run build`              | Typecheck and build the Vite app.                      |
+| `pnpm run build`              | Typecheck and build the Vite app plus CLI bundle.      |
+| `pnpm cli:build`              | Build the Node CLI to `dist/cli.js`.                   |
+| `pnpm cli:dev`                | Run the TypeScript CLI entry with `tsx`.               |
 | `pnpm run test`               | Run Vitest tests.                                      |
 | `pnpm run lint`               | Run Oxlint.                                            |
 | `pnpm run format`             | Check formatting with oxfmt.                           |

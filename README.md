@@ -167,6 +167,68 @@ The API rewrites paragraph-sized text, grades style fit, and checks meaning
 preservation. Final smoothing is off unless `options.finalSmoothing` is set to
 `true`.
 
+## CLI
+
+StyleMakar also has a Node-based CLI for scriptable rewrites. It calls the same
+rewrite pipeline directly and does not require the web server or desktop app to
+be running.
+
+For agent workflows, this repo includes a bundled skill in
+`.agents/skills/stylemakar-cli/`. Install it with:
+
+```sh
+npx skills add taugr/stylemakar --skill stylemakar-cli
+```
+
+Then ask your coding agent to use `$stylemakar-cli` when rewriting text,
+checking provider readiness, or customizing style profiles and examples.
+
+Build and smoke-test the CLI:
+
+```sh
+pnpm cli:build
+node dist/cli.js --help
+```
+
+Install the current checkout on your PATH:
+
+```sh
+pnpm cli:build
+pnpm link --global
+stylemakar --help
+```
+
+After a package is published, install it globally:
+
+```sh
+pnpm add --global stylemakar
+```
+
+Rewrite a file, stdin, or direct text:
+
+```sh
+stylemakar rewrite draft.md --out rewritten.md
+stylemakar rewrite < draft.md
+stylemakar rewrite "Our platform leverages advanced AI to improve workflows."
+```
+
+List provider models or check provider reachability:
+
+```sh
+stylemakar models --base-url http://localhost:1234/v1
+stylemakar health --base-url http://localhost:1234/v1
+```
+
+Useful rewrite options:
+
+- `--base-url <url>`
+- `--model <id>`
+- `--reasoning-effort <none|minimal|low|medium|high|xhigh>`
+- `--profile <path>` for a `StyleProfile` JSON file
+- `--examples <path>` for a JSON array of reference examples
+- `--json` for the full pipeline result
+- `--debug` to include pipeline debug fields in JSON output
+
 ## Evals
 
 Seed fixtures and run the Promptfoo smoke eval:

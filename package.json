@@ -20,8 +20,19 @@
     "type": "git",
     "url": "git+https://github.com/taugr/stylemakar.git"
   },
+  "bin": {
+    "stylemakar": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    ".agents/skills/stylemakar-cli/SKILL.md",
+    "README.md",
+    "LICENSE"
+  ],
   "type": "module",
   "scripts": {
+    "cli:build": "tsdown",
+    "cli:dev": "tsx src/cli.ts",
     "dev": "concurrently -k \"vite --host 127.0.0.1\" \"tsx watch src/server/index.ts\"",
     "dev:api": "tsx watch src/server/index.ts",
     "eval": "pnpm eval:seed && pnpm eval:rewrite",
@@ -31,7 +42,7 @@
     "eval:seed": "tsx evals/scripts/seed-eval-data.ts",
     "eval:smoke": "pnpm eval:seed && promptfoo eval -c evals/promptfoo-smoke.yaml",
     "eval:view": "promptfoo view",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build && pnpm cli:build",
     "desktop:bundle:mac": "node scripts/build-unsigned-macos-dmg.mjs",
     "desktop:build": "tauri build",
     "desktop:check": "pnpm typecheck && cargo check --manifest-path src-tauri/Cargo.toml",
@@ -47,18 +58,21 @@
     "format:fix": "oxfmt . --write",
     "lint": "oxlint -c oxlint.json .",
     "lint:fix": "oxlint -c oxlint.json . --fix",
-    "prepare": "node scripts/prepare.mjs"
+    "prepare": "node scripts/prepare.mjs",
+    "prepack": "pnpm build"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.11.1",
     "@vitejs/plugin-react": "^6.0.3",
+    "commander": "^15.0.0",
     "concurrently": "^10.0.3",
     "express": "^5.2.1",
     "lucide-react": "^1.21.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "tsx": "^4.22.4",
-    "vite": "^8.1.0"
+    "vite": "^8.1.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.11.3",
@@ -72,6 +86,7 @@
     "oxlint": "^1.71.0",
     "oxlint-tsgolint": "^0.23.0",
     "promptfoo": "^0.121.17",
+    "tsdown": "^0.22.3",
     "typescript": "^6.0.3",
     "vitepress": "^1.6.4",
     "vitepress-plugin-group-icons": "^1.7.5",
