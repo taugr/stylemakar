@@ -87,7 +87,7 @@
     "oxlint-tsgolint": "^0.24.0",
     "promptfoo": "^0.121.19",
     "tsdown": "^0.22.9",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "vitepress": "^1.6.4",
     "vitepress-plugin-group-icons": "^1.7.5",
     "vitest": "^4.1.10"
