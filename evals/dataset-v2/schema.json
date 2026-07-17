@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stylemakar.dev/evals/content-case-v1.schema.json",
+  "title": "Stylemakar content efficacy case",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "familyId",
+    "split",
+    "source",
+    "profile",
+    "constraints",
+    "rubric",
+    "metadata"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]+$" },
+    "familyId": { "type": "string", "minLength": 1 },
+    "templateId": { "type": "string" },
+    "split": { "enum": ["development", "validation", "holdout"] },
+    "source": { "type": "string", "minLength": 1 },
+    "profile": {
+      "type": "object",
+      "required": ["id", "referenceExamples"],
+      "properties": {
+        "id": { "type": "string" },
+        "definitionPath": { "type": "string" },
+        "inlineDefinition": { "type": "object" },
+        "referenceExamples": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "required": [
+        "mustPreserve",
+        "mustPreserveVerbatim",
+        "immutableBlocks",
+        "forbiddenClaims",
+        "allowedTransformations"
+      ],
+      "properties": {
+        "mustPreserve": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/claim" }
+        },
+        "mustPreserveVerbatim": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "immutableBlocks": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/block" }
+        },
+        "forbiddenClaims": { "type": "array", "items": { "type": "string" } },
+        "allowedTransformations": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "rubric": {
+      "type": "object",
+      "required": ["meaning", "style", "minimumAcceptability"],
+      "properties": {
+        "meaning": { "type": "string", "minLength": 1 },
+        "style": { "type": "string", "minLength": 1 },
+        "minimumAcceptability": { "type": "string", "minLength": 1 }
+      }
+    },
+    "referenceOutputs": { "type": "array" },
+    "metadata": {
+      "type": "object",
+      "required": [
+        "domain",
+        "length",
+        "structure",
+        "difficulty",
+        "origin",
+        "license",
+        "reviewedBy"
+      ],
+      "properties": {
+        "domain": { "type": "string" },
+        "length": {
+          "enum": ["fragment", "sentence", "paragraph", "multi-paragraph"]
+        },
+        "structure": { "type": "array", "items": { "type": "string" } },
+        "difficulty": { "enum": ["basic", "medium", "hard", "adversarial"] },
+        "origin": {
+          "enum": [
+            "hand-authored",
+            "synthetic-reviewed",
+            "public-licensed",
+            "opt-in"
+          ]
+        },
+        "license": { "type": "string", "minLength": 1 },
+        "reviewedBy": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "adjudicatedBy": { "type": "string" }
+      }
+    }
+  },
+  "$defs": {
+    "claim": {
+      "type": "object",
+      "required": ["id", "description", "kind"],
+      "properties": {
+        "id": { "type": "string" },
+        "description": { "type": "string" },
+        "kind": {
+          "enum": [
+            "fact",
+            "negation",
+            "uncertainty",
+            "causation",
+            "condition",
+            "recommendation-strength",
+            "scope",
+            "attribution",
+            "sequence"
+          ]
+        },
+        "requiredTerms": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "block": {
+      "type": "object",
+      "required": ["kind", "value"],
+      "properties": {
+        "kind": {
+          "enum": ["code", "url", "identifier", "quote", "table-cell", "custom"]
+        },
+        "value": { "type": "string" }
+      }
+    }
+  }
+}

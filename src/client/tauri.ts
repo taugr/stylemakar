@@ -1,6 +1,11 @@
 import { invoke } from '@tauri-apps/api/core';
-import { selectGemmaModel } from '../shared/modelSelection';
-import type { ModelInfo, ModelProviderSettings } from '../shared/types';
+import { selectAvailableModel } from '../shared/modelSelection';
+import type {
+  ModelInfo,
+  ModelProviderSettings,
+  ProviderCapabilityStatus,
+  ContentStoreSnapshot,
+} from '../shared/types';
 
 type ChatMessage = {
   role: 'system' | 'user';
@@ -30,7 +35,7 @@ export async function getTauriHealth(
 ): Promise<HealthResponse> {
   const models = await getTauriModels(provider);
   const modelIds = models.map((model) => model.id);
-  const selectedModel = selectGemmaModel(modelIds, provider.model ?? 'gemma-4');
+  const selectedModel = selectAvailableModel(modelIds, provider.model) ?? '';
 
   return {
     gemma4Found: modelIds.some((model) =>
@@ -47,12 +52,32 @@ export async function getTauriModels(
   provider: Partial<ModelProviderSettings>,
 ): Promise<ModelInfo[]> {
   const models = await invoke<string[]>('list_models', { provider });
-  const selectedModel = selectGemmaModel(models, provider.model ?? 'gemma-4');
+  const selectedModel = selectAvailableModel(models, provider.model);
 
   return models.map((model) => ({
     id: model,
     selected: model === selectedModel,
   }));
+}
+
+export async function getTauriProviderCapabilities(
+  provider: ModelProviderSettings,
+): Promise<ProviderCapabilityStatus> {
+  return invoke<ProviderCapabilityStatus>('probe_provider', { provider });
+}
+
+export async function loadTauriContentStore(): Promise<
+  ContentStoreSnapshot | undefined
+> {
+  return invoke<ContentStoreSnapshot | null>('load_content_store').then(
+    (snapshot) => snapshot ?? undefined,
+  );
+}
+
+export async function saveTauriContentStore(
+  snapshot: ContentStoreSnapshot,
+): Promise<void> {
+  await invoke('save_content_store', { snapshot });
 }
 
 export async function completeJsonWithTauri<T>(

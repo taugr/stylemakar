@@ -13,13 +13,19 @@ import {
   DEFAULT_REFERENCE_EXAMPLES,
   DEFAULT_STYLE_PROFILE,
 } from '../shared/defaults';
-import type { RewriteApiRequest } from '../shared/types';
+import type { ModelProviderSettings, RewriteApiRequest } from '../shared/types';
 import type {
   EvalRewriteRequest,
   EvalRewriteResponse,
   StyleProfile,
 } from '../shared/types';
-import { listModels, normalizeBaseUrl, resolveModel } from './lmStudio';
+import {
+  completeJson,
+  listModels,
+  normalizeBaseUrl,
+  probeProviderCapabilities,
+  resolveModel,
+} from './lmStudio';
 import { runRewritePipeline } from './pipeline';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -46,6 +52,21 @@ function hasGemmaFour(modelId: string): boolean {
   return (
     normalized.includes('gemma') && /(?:^|[^0-9])4(?:[^0-9]|$)/.test(normalized)
   );
+}
+
+function validateProviderSettings(body: unknown): ModelProviderSettings {
+  if (!body || typeof body !== 'object') {
+    throw new Error('Request body must be an object.');
+  }
+
+  const candidate = body as Partial<ModelProviderSettings>;
+  const baseUrl = normalizeBaseUrl(candidate.baseUrl);
+
+  return {
+    baseUrl,
+    model: candidate.model?.trim() || undefined,
+    reasoningEffort: candidate.reasoningEffort,
+  };
 }
 
 export function validateRewriteRequest(body: unknown): RewriteApiRequest {
@@ -150,7 +171,7 @@ export function createApp(): Express {
           lmStudioReachable: true,
           model: selectedModel ?? DEFAULT_PROVIDER.model,
           ok: true,
-          status: 'ready',
+          status: 'connected',
         });
       } catch (error) {
         response.status(503).json({
@@ -160,6 +181,20 @@ export function createApp(): Express {
           model: DEFAULT_PROVIDER.model,
           ok: false,
           status: 'degraded',
+        });
+      }
+    }),
+  );
+
+  app.post(
+    '/api/provider/capabilities',
+    asyncRoute(async (request, response) => {
+      try {
+        const provider = validateProviderSettings(request.body);
+        response.json(await probeProviderCapabilities(provider));
+      } catch (error) {
+        response.status(400).json({
+          error: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     }),
@@ -194,26 +229,102 @@ export function createApp(): Express {
           body.provider.model.trim().length > 0
             ? body.provider.model.trim()
             : undefined;
-        const model =
-          requestedModel ??
-          (await resolveModel({ baseUrl, model: DEFAULT_PROVIDER.model }));
-        const result = await runRewritePipeline({
-          document: body.document,
-          options: body.options,
-          provider: {
-            baseUrl,
-            model,
-            reasoningEffort: body.provider?.reasoningEffort,
+        const model = requestedModel ?? (await resolveModel({ baseUrl }));
+        const controller = new AbortController();
+        request.once('aborted', () => controller.abort());
+        const result = await runRewritePipeline(
+          {
+            document: body.document,
+            options: body.options,
+            provider: {
+              baseUrl,
+              model,
+              reasoningEffort: body.provider?.reasoningEffort,
+            },
+            referenceExamples:
+              body.referenceExamples ?? DEFAULT_REFERENCE_EXAMPLES,
+            styleProfile: body.styleProfile ?? DEFAULT_STYLE_PROFILE,
           },
-          referenceExamples:
-            body.referenceExamples ?? DEFAULT_REFERENCE_EXAMPLES,
-          styleProfile: body.styleProfile ?? DEFAULT_STYLE_PROFILE,
-        });
+          {
+            completeJson,
+            runId: body.runId,
+            signal: controller.signal,
+          },
+        );
 
         response.json({ ...result, model });
       } catch (error) {
         const message =
           error instanceof Error ? error.message : 'Unknown error';
+        const status =
+          message.includes('required') || message.includes('baseUrl')
+            ? 400
+            : 502;
+        response.status(status).json({ error: message });
+      }
+    }),
+  );
+
+  app.post(
+    '/api/rewrite/stream',
+    asyncRoute(async (request, response) => {
+      const controller = new AbortController();
+      request.once('aborted', () => controller.abort());
+
+      try {
+        const body = validateRewriteRequest(request.body);
+        const baseUrl = normalizeBaseUrl(body.provider?.baseUrl);
+        const requestedModel =
+          typeof body.provider?.model === 'string' &&
+          body.provider.model.trim().length > 0
+            ? body.provider.model.trim()
+            : undefined;
+        const model = requestedModel ?? (await resolveModel({ baseUrl }));
+
+        response.status(200);
+        response.setHeader('Cache-Control', 'no-cache, no-transform');
+        response.setHeader('Content-Type', 'application/x-ndjson');
+        response.flushHeaders();
+
+        const result = await runRewritePipeline(
+          {
+            document: body.document,
+            options: body.options,
+            provider: {
+              baseUrl,
+              model,
+              reasoningEffort: body.provider?.reasoningEffort,
+            },
+            referenceExamples:
+              body.referenceExamples ?? DEFAULT_REFERENCE_EXAMPLES,
+            styleProfile: body.styleProfile ?? DEFAULT_STYLE_PROFILE,
+          },
+          {
+            completeJson,
+            onProgress: (progress) => {
+              response.write(
+                `${JSON.stringify({ progress, type: 'progress' })}\n`,
+              );
+            },
+            runId: body.runId,
+            signal: controller.signal,
+          },
+        );
+
+        response.end(
+          `${JSON.stringify({ result: { ...result, model }, type: 'result' })}\n`,
+        );
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Unknown error';
+
+        if (response.headersSent) {
+          response.end(
+            `${JSON.stringify({ error: message, type: 'error' })}\n`,
+          );
+          return;
+        }
+
         const status =
           message.includes('required') || message.includes('baseUrl')
             ? 400
@@ -239,9 +350,7 @@ export function createApp(): Express {
           typeof body.model === 'string' && body.model.trim().length > 0
             ? body.model.trim()
             : undefined;
-        const model =
-          requestedModel ??
-          (await resolveModel({ baseUrl, model: DEFAULT_PROVIDER.model }));
+        const model = requestedModel ?? (await resolveModel({ baseUrl }));
         const result = await runRewritePipeline({
           document: body.source,
           options: {

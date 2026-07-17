@@ -21,6 +21,21 @@ export type StyleProfile = {
   antiRules: string[];
 };
 
+export type VoiceExample = {
+  id: string;
+  text: string;
+  label?: string;
+  createdAt: string;
+};
+
+export type VoiceProfileRecord = StyleProfile & {
+  examples: VoiceExample[];
+  createdAt: string;
+  updatedAt: string;
+  schemaVersion: number;
+  isStarter?: boolean;
+};
+
 export type RewriteInput = {
   originalParagraph: string;
   styleProfile: StyleProfile;
@@ -102,12 +117,92 @@ export type ModelProviderSettings = {
   reasoningEffort?: 'none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh';
 };
 
+export type ProviderKind =
+  | 'lmstudio'
+  | 'ollama'
+  | 'openai'
+  | 'openrouter'
+  | 'litellm'
+  | 'custom';
+
+export type ProviderProfile = ModelProviderSettings & {
+  id: string;
+  name: string;
+  kind: ProviderKind;
+};
+
+export type ProviderErrorKind =
+  | 'unreachable'
+  | 'authentication'
+  | 'model-missing'
+  | 'timeout'
+  | 'invalid-json'
+  | 'empty-completion'
+  | 'rate-limit'
+  | 'unknown';
+
+export type ProviderCapabilityStatus = {
+  providerFingerprint: string;
+  endpointReachable: boolean;
+  modelDiscovery: 'supported' | 'unsupported' | 'failed';
+  selectedModel?: string;
+  selectedModelAvailable: boolean;
+  structuredOutput: 'verified' | 'unverified' | 'failed';
+  rewriteReady: boolean;
+  availableModels: string[];
+  checkedAt: string;
+  error?: {
+    kind: ProviderErrorKind;
+    message: string;
+  };
+};
+
 export type PipelineOptions = {
   includeDebug?: boolean;
   styleThreshold?: number;
   finalSmoothing?: boolean;
   maxRewriteIterations?: number;
   runMeaningCheck?: boolean;
+};
+
+export type RewriteStage =
+  | 'queued'
+  | 'extracting-meaning'
+  | 'analysing-style'
+  | 'rewriting'
+  | 'grading-style'
+  | 'checking-meaning'
+  | 'repairing-meaning'
+  | 'assembling'
+  | 'complete';
+
+export type RewriteProgress = {
+  runId: string;
+  stage: RewriteStage;
+  segmentIndex: number;
+  segmentCount: number;
+  attempt: number;
+  message: string;
+};
+
+export type RewriteVersion = {
+  acceptedAt?: string;
+  id: string;
+  runId: string;
+  generatedText: string;
+  editedText: string;
+  providerId: string;
+  model: string;
+  voiceProfileId: string;
+  voiceSnapshot?: VoiceProfileRecord;
+  quality: {
+    meaning: 'passed' | 'failed' | 'not-checked';
+    styleScore?: number;
+    warnings: string[];
+    preservedDetails: string[];
+    risks: string[];
+  };
+  createdAt: string;
 };
 
 export type PipelineRequest = {
@@ -136,11 +231,18 @@ export type PipelineResult = {
   debug?: {
     segmentResults: SegmentResult[];
     finalSmoothing?: FinalSmoothingOutput;
+    diagnostics?: {
+      runId: string;
+      elapsedMs: number;
+      modelCalls: number;
+      stageLatencyMs: Partial<Record<RewriteStage, number>>;
+    };
   };
 };
 
 export type RewriteApiRequest = {
   document: string;
+  runId?: string;
   styleProfile?: StyleProfile;
   referenceExamples?: string[];
   provider?: Partial<ModelProviderSettings>;
@@ -198,9 +300,28 @@ export type DocumentRecord = {
   createdAt: string;
   updatedAt: string;
   styleProfile: StyleProfile;
+  voiceProfileId?: string;
   provider: ModelProviderSettings;
   debug?: PipelineResult['debug'];
   warnings: string[];
+  versions?: RewriteVersion[];
+  selectedVersionId?: string;
+  schemaVersion?: number;
+  trashedAt?: string;
+};
+
+export type AppBackup = {
+  schemaVersion: 1;
+  exportedAt: string;
+  documents: DocumentRecord[];
+  voices: VoiceProfileRecord[];
+};
+
+export type ContentStoreSnapshot = {
+  schemaVersion: 1;
+  updatedAt: string;
+  documents: DocumentRecord[];
+  voices: VoiceProfileRecord[];
 };
 
 export type ModelInfo = {

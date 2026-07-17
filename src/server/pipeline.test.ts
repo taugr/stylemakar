@@ -95,6 +95,7 @@ describe('runRewritePipeline', () => {
 
   it('rewrites paragraph segments and preserves non-rewritable segments', async () => {
     const calls: string[] = [];
+    const progress: string[] = [];
     const result = await runRewritePipeline(
       {
         document: '# Title\n\nOriginal paragraph.\n\n```ts\nconst x = 1;\n```',
@@ -133,6 +134,8 @@ describe('runRewritePipeline', () => {
               '# Title\n\nRewritten paragraph.\n\n```ts\nconst x = 1;\n```',
           } satisfies FinalSmoothingOutput as T;
         },
+        onProgress: (event) => progress.push(event.stage),
+        runId: 'test-run',
       },
     );
 
@@ -153,6 +156,16 @@ describe('runRewritePipeline', () => {
     expect(result.debug?.segmentResults[0]?.styleTargets).toEqual(
       styleTargets(),
     );
+    expect(progress).toEqual([
+      'queued',
+      'extracting-meaning',
+      'analysing-style',
+      'rewriting',
+      'grading-style',
+      'checking-meaning',
+      'assembling',
+      'complete',
+    ]);
   });
 
   it('revises on low style grade and repairs failed meaning checks', async () => {
@@ -887,5 +900,28 @@ describe('runRewritePipeline', () => {
     expect(result.debug?.segmentResults[0]?.attempts[0]?.grade.issues).toEqual(
       [],
     );
+  });
+
+  it('stops before model work when a rewrite is cancelled', async () => {
+    const controller = new AbortController();
+    controller.abort();
+
+    await expect(
+      runRewritePipeline(
+        {
+          document: 'Original paragraph.',
+          provider: DEFAULT_PROVIDER,
+          referenceExamples: DEFAULT_REFERENCE_EXAMPLES,
+          styleProfile: DEFAULT_STYLE_PROFILE,
+        },
+        {
+          completeJson: async <T>(): Promise<T> => {
+            throw new Error('Model should not be called.');
+          },
+          runId: 'cancelled-run',
+          signal: controller.signal,
+        },
+      ),
+    ).rejects.toMatchObject({ name: 'AbortError' });
   });
 });

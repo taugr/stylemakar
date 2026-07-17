@@ -80,7 +80,7 @@ describe('stylemakar cli', () => {
     expect(harness.stderr).toBe('');
     expect(harness.deps.resolveModel).toHaveBeenCalledWith({
       baseUrl: 'http://localhost:1234/v1',
-      model: 'gemma-4',
+      model: undefined,
     });
     expect(harness.requests[0]).toMatchObject({
       document: 'Original text.',

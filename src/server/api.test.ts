@@ -25,14 +25,18 @@ async function listenApp(app: Express): Promise<string> {
   return listen(server);
 }
 
-function createFakeLmStudio(): Server {
+function createFakeLmStudio(
+  options: { models?: string[]; probeContent?: string } = {},
+): Server {
   return http.createServer((request, response) => {
     response.setHeader('Content-Type', 'application/json');
 
     if (request.url === '/v1/models') {
       response.end(
         JSON.stringify({
-          data: [{ id: 'qwen3-14b' }, { id: 'lmstudio/gemma-4-test' }],
+          data: (options.models ?? ['qwen3-14b', 'lmstudio/gemma-4-test']).map(
+            (id) => ({ id }),
+          ),
         }),
       );
       return;
@@ -51,7 +55,9 @@ function createFakeLmStudio(): Server {
         const system = parsed.messages[0]?.content ?? '';
         let content = '{}';
 
-        if (system.includes('Extract meaning from the paragraph')) {
+        if (system.includes('matching this schema')) {
+          content = options.probeContent ?? JSON.stringify({ status: 'ok' });
+        } else if (system.includes('Extract meaning from the paragraph')) {
           content = JSON.stringify({
             caveats: [],
             claims: ['Original text.'],
@@ -162,6 +168,37 @@ describe('api', () => {
     );
   });
 
+  it('streams granular rewrite progress before the final result', async () => {
+    const lmStudioBaseUrl = `${await listen(createFakeLmStudio())}/v1`;
+    const appBaseUrl = await listenApp(createApp());
+    const response = await fetch(`${appBaseUrl}/api/rewrite/stream`, {
+      body: JSON.stringify({
+        document: 'Original text.',
+        options: { includeDebug: true },
+        provider: { baseUrl: lmStudioBaseUrl },
+        runId: 'stream-test',
+      }),
+      headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+    });
+
+    expect(response.headers.get('content-type')).toContain(
+      'application/x-ndjson',
+    );
+    const events = (await response.text())
+      .trim()
+      .split('\n')
+      .map(
+        (line) =>
+          JSON.parse(line) as { progress?: { stage: string }; type: string },
+      );
+    expect(events.some((event) => event.type === 'progress')).toBe(true);
+    expect(
+      events.some((event) => event.progress?.stage === 'extracting-meaning'),
+    ).toBe(true);
+    expect(events.at(-1)?.type).toBe('result');
+  });
+
   it('checks health against a configured provider endpoint', async () => {
     const lmStudioBaseUrl = `${await listen(createFakeLmStudio())}/v1`;
     const appBaseUrl = await listenApp(createApp());
@@ -174,6 +211,73 @@ describe('api', () => {
       lmStudioReachable: true,
       model: 'lmstudio/gemma-4-test',
       ok: true,
+    });
+  });
+
+  it('marks an exact model ready only after structured output succeeds', async () => {
+    const lmStudioBaseUrl = `${await listen(createFakeLmStudio())}/v1`;
+    const appBaseUrl = await listenApp(createApp());
+    const response = await fetch(`${appBaseUrl}/api/provider/capabilities`, {
+      body: JSON.stringify({
+        baseUrl: lmStudioBaseUrl,
+        model: 'lmstudio/gemma-4-test',
+      }),
+      headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+    });
+
+    expect(response.ok).toBe(true);
+    await expect(response.json()).resolves.toMatchObject({
+      endpointReachable: true,
+      rewriteReady: true,
+      selectedModel: 'lmstudio/gemma-4-test',
+      selectedModelAvailable: true,
+      structuredOutput: 'verified',
+    });
+  });
+
+  it('reports a configured model mismatch without probing a replacement', async () => {
+    const lmStudioBaseUrl = `${await listen(createFakeLmStudio())}/v1`;
+    const appBaseUrl = await listenApp(createApp());
+    const response = await fetch(`${appBaseUrl}/api/provider/capabilities`, {
+      body: JSON.stringify({
+        baseUrl: lmStudioBaseUrl,
+        model: 'missing-model',
+      }),
+      headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+    });
+    const body = (await response.json()) as {
+      error?: { kind: string };
+      rewriteReady: boolean;
+      selectedModel?: string;
+    };
+
+    expect(body).toMatchObject({
+      error: { kind: 'model-missing' },
+      rewriteReady: false,
+    });
+    expect(body.selectedModel).toBeUndefined();
+  });
+
+  it('reports malformed structured output as incompatible', async () => {
+    const lmStudioBaseUrl = `${await listen(
+      createFakeLmStudio({ probeContent: '{not valid json}' }),
+    )}/v1`;
+    const appBaseUrl = await listenApp(createApp());
+    const response = await fetch(`${appBaseUrl}/api/provider/capabilities`, {
+      body: JSON.stringify({
+        baseUrl: lmStudioBaseUrl,
+        model: 'lmstudio/gemma-4-test',
+      }),
+      headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+    });
+
+    await expect(response.json()).resolves.toMatchObject({
+      error: { kind: 'invalid-json' },
+      rewriteReady: false,
+      structuredOutput: 'failed',
     });
   });
 

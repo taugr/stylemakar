@@ -25,6 +25,7 @@ import type {
   PipelineRequest,
   PipelineResult,
   RewriteOutput,
+  RewriteProgress,
   SegmentResult,
   StyleTargets,
   StyleGrade,
@@ -41,6 +42,9 @@ const PASSING_MEANING_CHECK: MeaningCheck = {
 
 type PipelineModelClient = {
   completeJson: typeof completeJson;
+  onProgress?: (progress: RewriteProgress) => void;
+  runId?: string;
+  signal?: AbortSignal;
 };
 
 const defaultClient: PipelineModelClient = {
@@ -584,6 +588,19 @@ export async function runRewritePipeline(
   request: PipelineRequest,
   client: PipelineModelClient = defaultClient,
 ): Promise<PipelineResult> {
+  const startedAt = performance.now();
+  const originalCompleteJson = client.completeJson;
+  let modelCalls = 0;
+  client = {
+    ...client,
+    completeJson: async <T>(
+      ...args: Parameters<typeof originalCompleteJson>
+    ): Promise<T> => {
+      modelCalls += 1;
+      return originalCompleteJson<T>(...args);
+    },
+  };
+  const runId = client.runId ?? crypto.randomUUID();
   const segments = segmentDocument(request.document);
   const segmentResults: SegmentResult[] = [];
   const outputSegments: string[] = [];
@@ -591,8 +608,43 @@ export async function runRewritePipeline(
   const threshold = request.options?.styleThreshold ?? DEFAULT_STYLE_THRESHOLD;
   const maxRewriteIterations = getMaxRewriteIterations(request);
   const runMeaningCheck = request.options?.runMeaningCheck !== false;
+  const stageLatencyMs: Partial<Record<RewriteProgress['stage'], number>> = {};
+  let previousStage: RewriteProgress['stage'] | undefined;
+  let previousStageStartedAt = performance.now();
 
-  for (const segment of segments) {
+  const report = (
+    stage: RewriteProgress['stage'],
+    segmentIndex: number,
+    attempt: number,
+    message: string,
+  ): void => {
+    if (client.signal?.aborted) {
+      throw new DOMException('Rewrite cancelled.', 'AbortError');
+    }
+
+    const now = performance.now();
+
+    if (previousStage) {
+      stageLatencyMs[previousStage] =
+        (stageLatencyMs[previousStage] ?? 0) +
+        Math.round(now - previousStageStartedAt);
+    }
+
+    previousStage = stage;
+    previousStageStartedAt = now;
+    client.onProgress?.({
+      attempt,
+      message,
+      runId,
+      segmentCount: segments.length,
+      segmentIndex,
+      stage,
+    });
+  };
+
+  report('queued', 0, 0, 'Rewrite queued.');
+
+  for (const [segmentIndex, segment] of segments.entries()) {
     if (!isRewritableSegment(segment)) {
       outputSegments.push(segment.originalText);
       continue;
@@ -616,11 +668,23 @@ export async function runRewritePipeline(
     const studentFeedbackPolicy = buildStudentFeedbackPolicy(
       request.styleProfile,
     );
+    report(
+      'extracting-meaning',
+      segmentIndex,
+      0,
+      `Extracting meaning from section ${segmentIndex + 1} of ${segments.length}.`,
+    );
     const meaningRepresentation = await extractMeaning(
       segment.originalText,
       request,
       antiGenericPolicy,
       client,
+    );
+    report(
+      'analysing-style',
+      segmentIndex,
+      0,
+      `Analysing the selected voice for section ${segmentIndex + 1}.`,
     );
     const styleTargets = await identifyStyleTargets(
       segment.originalText,
@@ -631,6 +695,12 @@ export async function runRewritePipeline(
     const segmentWarnings: string[] = [];
 
     for (let iteration = 0; iteration <= maxRewriteIterations; iteration += 1) {
+      report(
+        'rewriting',
+        segmentIndex,
+        iteration + 1,
+        `Rewriting section ${segmentIndex + 1}, attempt ${iteration + 1}.`,
+      );
       const rewrite = await rewriteSegment(
         iteration === 0 ? segment.originalText : candidate,
         request,
@@ -644,6 +714,12 @@ export async function runRewritePipeline(
       );
       candidate = rewrite.rewrittenText;
 
+      report(
+        'grading-style',
+        segmentIndex,
+        iteration + 1,
+        `Checking voice match for section ${segmentIndex + 1}.`,
+      );
       const grade = await gradeStyle(
         segment.originalText,
         candidate,
@@ -696,6 +772,12 @@ export async function runRewritePipeline(
         .join('\n');
     }
 
+    report(
+      'checking-meaning',
+      segmentIndex,
+      0,
+      `Checking meaning for section ${segmentIndex + 1}.`,
+    );
     let meaningCheck = runMeaningCheck
       ? await checkMeaning(
           segment.originalText,
@@ -708,6 +790,12 @@ export async function runRewritePipeline(
       : PASSING_MEANING_CHECK;
 
     if (runMeaningCheck && !meaningCheck.pass) {
+      report(
+        'repairing-meaning',
+        segmentIndex,
+        1,
+        `Repairing meaning in section ${segmentIndex + 1}.`,
+      );
       const antiGenericBeforeRepair = checkAntiGeneric(
         candidate,
         antiGenericPolicy,
@@ -878,14 +966,27 @@ export async function runRewritePipeline(
     });
   }
 
+  report(
+    'assembling',
+    segments.length,
+    0,
+    'Assembling the rewritten document.',
+  );
   const assembled = outputSegments.join('\n\n');
   const finalSmoothing = await smoothDocument(assembled, request, client);
   const content = finalSmoothing.document;
+  report('complete', segments.length, 0, 'Rewrite complete.');
 
   return {
     content,
     debug: request.options?.includeDebug
       ? {
+          diagnostics: {
+            elapsedMs: Math.round(performance.now() - startedAt),
+            modelCalls,
+            runId,
+            stageLatencyMs,
+          },
           finalSmoothing,
           segmentResults,
         }

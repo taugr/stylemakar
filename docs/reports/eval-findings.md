@@ -2,7 +2,9 @@
 
 ## Summary
 
-The eval harness now exercises the real rewrite pipeline through `POST /api/eval/rewrite`, and the current best local model path is LM Studio with `google/gemma-4-12b-qat` and `reasoningEffort: none`.
+The original regression harness exercises the real rewrite pipeline through `POST /api/eval/rewrite`. Its `36/36` result represents **12 unique development cases repeated at three rewrite-iteration limits**, not 36 independent efficacy examples.
+
+Dataset v2 now adds 96 family-isolated development, validation, and holdout candidates; atomic meaning constraints; immutable blocks; licensing and review metadata; deterministic validation; no-op, one-shot, and full-pipeline runners; slice-aware confidence-interval and regression reports; an independent-judge adapter; and blinded human-review and agreement tooling. The committed v2 corpus is labelled `pilot-candidate-review`: it meets pilot breadth quotas, but 0/96 rows currently have two independent approvals, so it must not yet be cited as efficacy evidence.
 
 The main product-quality picture has changed since the first runs:
 
@@ -96,4 +98,5 @@ Notes:
 - The known overwarm student-feedback case now passes meaning and deterministic checks.
 - The student-feedback slice passes all 12 result rows.
 - The final full matrix passes all 36 result rows.
+- These are 12 unique inputs across three iteration settings. They remain regression data, not a hidden holdout.
 - `Feedback paragraph: submission specifics` still receives a low model style-conformance score (`78`) while passing meaning, deterministic checks, and overall eval result. The retry safeguard keeps that meaning-safe draft instead of chasing a style retry that previously introduced semantic drift.

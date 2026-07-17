@@ -1,0 +1,37 @@
+schemaVersion: 1
+profiles: [direct-technical, student-feedback, casual-explanatory]
+splits: [development, validation, holdout]
+domains:
+  - software-technical
+  - product-project
+  - education-feedback
+  - workplace-email
+  - analytical-report
+  - public-copy
+  - policy-procedure
+  - general-explanation
+meaningFamilies:
+  - negation
+  - uncertainty
+  - causation
+  - conditions-exceptions
+  - recommendation-strength
+  - temporal-scope
+  - quantifiers-details
+  - attribution
+  - ordered-dependencies
+  - multiple-claims
+structures:
+  [
+    plain,
+    headings,
+    bullets,
+    numbered-list,
+    table,
+    fenced-code,
+    inline-code,
+    urls,
+    blockquote,
+    multi-paragraph,
+  ]
+difficulties: [basic, medium, hard, adversarial]

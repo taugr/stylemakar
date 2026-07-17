@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "datasetVersion": "2.0.0-pilot",
+  "caseFiles": ["cases/core.jsonl", "cases/pilot-candidates.jsonl"],
+  "holdoutChecksum": "85f3cf445bcda0d2e50cddd5e2abbce53ffc7831ab2ff6c0441b8693c2c2dfe5",
+  "rubricVersion": "1.0.0",
+  "status": "pilot-candidate-review",
+  "note": "96-case pilot candidate corpus meets breadth quotas. Every row remains non-gold until two independent human reviewers and adjudication are recorded."
+}

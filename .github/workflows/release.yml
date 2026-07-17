@@ -30,6 +30,9 @@ jobs:
       - name: install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: install browser
+        run: pnpm exec playwright install chromium
+
       - name: verify release tag matches package version
         run: |
           VERSION="$(node -p "require('./package.json').version")"
@@ -46,6 +49,8 @@ jobs:
           pnpm test
           pnpm typecheck
           pnpm desktop:check
+          pnpm eval:v2:validate
+          pnpm test:e2e
 
       - name: build unsigned DMG
         run: pnpm desktop:bundle:mac

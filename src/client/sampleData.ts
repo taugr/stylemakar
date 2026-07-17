@@ -1,4 +1,8 @@
-import { DEFAULT_PROVIDER, DEFAULT_STYLE_PROFILE } from '../shared/defaults';
+import {
+  DEFAULT_PROVIDER,
+  DEFAULT_STYLE_PROFILE,
+  DEFAULT_VOICE_PROFILE,
+} from '../shared/defaults';
 import type { DocumentRecord } from '../shared/types';
 
 export const sampleOriginal = `Our solution leverages cutting-edge AI technology to optimize workflow efficiency and deliver actionable insights. By harnessing the power of machine learning algorithms and advanced analytics, we empower organizations to make data-driven decisions that accelerate growth and improve productivity across all departments.
@@ -23,6 +27,7 @@ export const seedDocuments: DocumentRecord[] = [
     styleProfile: DEFAULT_STYLE_PROFILE,
     title: 'Q2 Product Strategy Draft',
     updatedAt: '2026-05-30T10:24:00.000Z',
+    voiceProfileId: DEFAULT_VOICE_PROFILE.id,
     warnings: [],
   },
   {
@@ -34,6 +39,7 @@ export const seedDocuments: DocumentRecord[] = [
     styleProfile: DEFAULT_STYLE_PROFILE,
     title: 'Blog Post - May 2025',
     updatedAt: '2026-05-18T09:00:00.000Z',
+    voiceProfileId: DEFAULT_VOICE_PROFILE.id,
     warnings: [],
   },
   {
@@ -45,6 +51,7 @@ export const seedDocuments: DocumentRecord[] = [
     styleProfile: DEFAULT_STYLE_PROFILE,
     title: 'Launch Announcement',
     updatedAt: '2026-05-17T09:00:00.000Z',
+    voiceProfileId: DEFAULT_VOICE_PROFILE.id,
     warnings: [],
   },
 ];

@@ -1,0 +1,47 @@
+name: quality
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v7
+
+      - name: setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11.13.1
+
+      - name: setup node
+        uses: actions/setup-node@v7
+        with:
+          cache: pnpm
+          node-version: 22.22.1
+
+      - name: install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: install browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: run static and unit checks
+        run: |
+          pnpm format
+          pnpm lint
+          pnpm test
+          pnpm typecheck
+          pnpm build
+          pnpm docs:build
+          pnpm eval:v2:smoke
+
+      - name: run product journeys
+        run: pnpm test:e2e
