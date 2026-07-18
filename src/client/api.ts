@@ -1,4 +1,6 @@
 import type {
+  AdaptiveVoiceComparisonRequest,
+  AdaptiveVoiceComparisonResponse,
   ModelInfo,
   ModelProviderSettings,
   PipelineResult,
@@ -8,6 +10,7 @@ import type {
 } from '../shared/types';
 import { DEFAULT_PROVIDER } from '../shared/defaults';
 import { runRewritePipeline } from '../server/pipeline';
+import { generateAdaptiveVoiceComparison } from '../server/styleLab';
 import {
   completeJsonWithTauri,
   getTauriProviderCapabilities,
@@ -103,6 +106,52 @@ export async function getModels(
 
   const body = (await response.json()) as { models: ModelInfo[] };
   return body.models;
+}
+
+export async function generateStyleLabComparison(
+  input: AdaptiveVoiceComparisonRequest,
+  execution?: { signal?: AbortSignal },
+): Promise<AdaptiveVoiceComparisonResponse> {
+  if (isTauriRuntime()) {
+    if (execution?.signal?.aborted) {
+      throw new DOMException('Adaptive comparison cancelled.', 'AbortError');
+    }
+
+    const generation = generateAdaptiveVoiceComparison(
+      input,
+      completeJsonWithTauri,
+    );
+
+    if (!execution?.signal) return generation;
+
+    return Promise.race([
+      generation,
+      new Promise<never>((_resolve, reject) => {
+        execution.signal?.addEventListener(
+          'abort',
+          () =>
+            reject(
+              new DOMException('Adaptive comparison cancelled.', 'AbortError'),
+            ),
+          { once: true },
+        );
+      }),
+    ]);
+  }
+
+  const response = await fetch('/api/style-lab/comparison', {
+    body: JSON.stringify(input),
+    headers: { 'Content-Type': 'application/json' },
+    method: 'POST',
+    signal: execution?.signal,
+  });
+
+  if (!response.ok) {
+    const body = (await response.json()) as { error?: string };
+    throw new Error(body.error ?? 'Adaptive comparison failed.');
+  }
+
+  return (await response.json()) as AdaptiveVoiceComparisonResponse;
 }
 
 export async function rewriteDocument(

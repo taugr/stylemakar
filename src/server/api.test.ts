@@ -102,6 +102,22 @@ function createFakeLmStudio(
           });
         } else if (system.includes('Edit conservatively')) {
           content = JSON.stringify({ document: 'Clear rewritten text.' });
+        } else if (system.includes('Create two alternative rewrites')) {
+          content = JSON.stringify({
+            candidateA: {
+              instruction: 'Use a warmer tone.',
+              text: 'The meeting is Tuesday, and we appreciate your flexibility.',
+            },
+            candidateB: {
+              instruction: 'Use a neutral tone.',
+              text: 'The meeting is Tuesday.',
+            },
+          });
+        } else if (system.includes('Check both candidate rewrites')) {
+          content = JSON.stringify({
+            candidateA: { pass: true, risks: [] },
+            candidateB: { pass: true, risks: [] },
+          });
         }
 
         response.end(JSON.stringify({ choices: [{ message: { content } }] }));
@@ -318,6 +334,39 @@ describe('api', () => {
     expect(body.debug.segments[0]?.originalText).toBe('Original text.');
     expect(body.debug.segments[0]?.attempts[0]?.styleScore).toBe(92);
     expect(body.debug.segments[0]?.meaningCheck?.pass).toBe(true);
+  });
+
+  it('generates adaptive Style Lab pairs only after meaning checks pass', async () => {
+    const lmStudioBaseUrl = `${await listen(createFakeLmStudio())}/v1`;
+    const appBaseUrl = await listenApp(createApp());
+    const response = await fetch(`${appBaseUrl}/api/style-lab/comparison`, {
+      body: JSON.stringify({
+        dimension: 'warmth',
+        preservedDetails: ['Tuesday'],
+        provider: {
+          baseUrl: lmStudioBaseUrl,
+          model: 'lmstudio/gemma-4-test',
+        },
+        sourceText: 'The meeting is Tuesday.',
+        voice: {
+          antiRules: [],
+          description: 'Clear updates.',
+          id: 'test',
+          name: 'Test voice',
+          rules: [],
+        },
+      }),
+      headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+    });
+
+    expect(response.ok).toBe(true);
+    await expect(response.json()).resolves.toMatchObject({
+      dimension: 'warmth',
+      meaningCheck: { candidateA: true, candidateB: true },
+      promptVersion: 1,
+      source: 'generated',
+    });
   });
 
   it('rejects unknown eval profiles', async () => {

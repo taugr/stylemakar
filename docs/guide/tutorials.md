@@ -18,6 +18,26 @@ Resize the app below `720px` or open it on a phone-sized viewport. The mobile sh
 
 ![StyleMakar mobile source tab](/screenshots/workspace-mobile.png)
 
+## Teach StyleMakar Your Voice
+
+1. Open **Style Lab** from the sidebar or the active voice row.
+2. Start **Voice Coach**.
+3. Choose which of the two blinded versions sounds more like you. You can also
+   select tie, neither, or write your own version.
+4. Review every inferred preference before saving it.
+5. With a compatible provider connected, run the blinded comparison between
+   the prior and proposed voices.
+6. Use **Fine-tune my voice** later to focus on directness, warmth, formality,
+   concision, sentence rhythm, vocabulary, or explanation structure.
+
+The curated coach works offline. Adaptive examples are optional and pass a
+meaning check before appearing. StyleMakar stores calibration evidence with the
+local voice profile and never activates an inferred preference before review.
+
+When you substantially edit and accept a rewrite, StyleMakar may suggest a
+specific preference based on that edit. The voice changes only if you choose
+**Save preference**.
+
 ## Call The Rewrite API
 
 Run the development API:
@@ -59,6 +79,12 @@ For the full matrix:
 
 ```sh
 pnpm eval:iterations:matrix
+```
+
+Validate the curated personalisation contract:
+
+```sh
+pnpm eval:personalisation
 ```
 
 Eval results are written under ignored `evals/results/`. Use `STYLEMAKAR_EVAL_BASE_URL`, `STYLEMAKAR_EVAL_PROVIDER_ID`, `STYLEMAKAR_EVAL_CASE_FILTER`, `STYLEMAKAR_EVAL_MODEL`, and `STYLEMAKAR_EVAL_REASONING_EFFORT` to keep iteration runs targeted.

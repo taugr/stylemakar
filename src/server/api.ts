@@ -13,7 +13,11 @@ import {
   DEFAULT_REFERENCE_EXAMPLES,
   DEFAULT_STYLE_PROFILE,
 } from '../shared/defaults';
-import type { ModelProviderSettings, RewriteApiRequest } from '../shared/types';
+import type {
+  AdaptiveVoiceComparisonRequest,
+  ModelProviderSettings,
+  RewriteApiRequest,
+} from '../shared/types';
 import type {
   EvalRewriteRequest,
   EvalRewriteResponse,
@@ -27,6 +31,7 @@ import {
   resolveModel,
 } from './lmStudio';
 import { runRewritePipeline } from './pipeline';
+import { generateAdaptiveVoiceComparison } from './styleLab';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(dirname, '../..');
@@ -330,6 +335,25 @@ export function createApp(): Express {
             ? 400
             : 502;
         response.status(status).json({ error: message });
+      }
+    }),
+  );
+
+  app.post(
+    '/api/style-lab/comparison',
+    asyncRoute(async (request, response) => {
+      try {
+        const body = request.body as AdaptiveVoiceComparisonRequest;
+        const provider = validateProviderSettings(body.provider);
+        response.json(
+          await generateAdaptiveVoiceComparison({ ...body, provider }),
+        );
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Unknown error';
+        response.status(message.includes('requires') ? 400 : 502).json({
+          error: message,
+        });
       }
     }),
   );

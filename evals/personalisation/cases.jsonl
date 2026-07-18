@@ -1,0 +1,14 @@
+{"id":"directness-a","familyId":"directness","comparisonId":"directness-01","profile":"conclusion-first","preferredOption":"a","expectedInstruction":"Lead with the main point or requested action."}
+{"id":"directness-b","familyId":"directness","comparisonId":"directness-01","profile":"context-first","preferredOption":"b","expectedInstruction":"Give the reason or context before the main action."}
+{"id":"warmth-a","familyId":"warmth","comparisonId":"warmth-01","profile":"warm-guidance","preferredOption":"a","expectedInstruction":"Use warm, encouraging language while staying specific."}
+{"id":"warmth-b","familyId":"warmth","comparisonId":"warmth-01","profile":"neutral-guidance","preferredOption":"b","expectedInstruction":"Use a neutral, matter-of-fact tone."}
+{"id":"formality-a","familyId":"formality","comparisonId":"formality-01","profile":"moderately-formal","preferredOption":"a","expectedInstruction":"Use polished, moderately formal phrasing."}
+{"id":"formality-b","familyId":"formality","comparisonId":"formality-01","profile":"conversational","preferredOption":"b","expectedInstruction":"Use natural, conversational phrasing."}
+{"id":"concision-a","familyId":"concision","comparisonId":"concision-01","profile":"compressed","preferredOption":"a","expectedInstruction":"Compress related details into concise sentences."}
+{"id":"concision-b","familyId":"concision","comparisonId":"concision-01","profile":"explicit-detail","preferredOption":"b","expectedInstruction":"Give important details their own explicit sentences."}
+{"id":"rhythm-a","familyId":"rhythm","comparisonId":"rhythm-01","profile":"varied-rhythm","preferredOption":"a","expectedInstruction":"Vary sentence length and combine closely related ideas."}
+{"id":"rhythm-b","familyId":"rhythm","comparisonId":"rhythm-01","profile":"short-rhythm","preferredOption":"b","expectedInstruction":"Use short, consistently shaped sentences for emphasis."}
+{"id":"vocabulary-a","familyId":"vocabulary","comparisonId":"vocabulary-01","profile":"domain-precise","preferredOption":"a","expectedInstruction":"Use precise domain terms when they make the explanation shorter."}
+{"id":"vocabulary-b","familyId":"vocabulary","comparisonId":"vocabulary-01","profile":"plain-language","preferredOption":"b","expectedInstruction":"Prefer plain language over specialist terminology."}
+{"id":"explanation-a","familyId":"explanation-shape","comparisonId":"explanation-shape-01","profile":"conclusion-first","preferredOption":"a","expectedInstruction":"State the conclusion first, then explain why."}
+{"id":"explanation-b","familyId":"explanation-shape","comparisonId":"explanation-shape-01","profile":"reasoning-first","preferredOption":"b","expectedInstruction":"Explain the reasoning before presenting the conclusion."}

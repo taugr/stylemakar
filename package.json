@@ -41,6 +41,7 @@
     "eval:rewrite": "promptfoo eval -c evals/promptfoo.yaml",
     "eval:seed": "tsx evals/scripts/seed-eval-data.ts",
     "eval:smoke": "pnpm eval:seed && promptfoo eval -c evals/promptfoo-smoke.yaml",
+    "eval:personalisation": "tsx evals/scripts/check-personalisation.ts",
     "eval:view": "promptfoo view",
     "eval:v2:validate": "tsx evals/scripts/validate-dataset.ts",
     "eval:v2:report": "tsx evals/scripts/build-eval-report.ts",

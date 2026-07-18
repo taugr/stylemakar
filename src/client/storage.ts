@@ -23,6 +23,22 @@ const VOICES_KEY = 'stylemakar.voices';
 const DOCUMENT_RECOVERY_KEY = 'stylemakar.documents-recovery';
 
 const MAX_EXAMPLE_LENGTH = 50_000;
+const MAX_CALIBRATION_SESSIONS = 50;
+const MAX_PREFERENCE_EVIDENCE = 500;
+const VOICE_DIMENSIONS = new Set([
+  'directness',
+  'warmth',
+  'formality',
+  'concision',
+  'rhythm',
+  'vocabulary',
+  'explanation-shape',
+  'custom',
+]);
+
+function uniqueStrings(values: string[]): string[] {
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
+}
 
 function normalizeDocument(document: DocumentRecord): DocumentRecord {
   const voiceProfileId = document.voiceProfileId ?? DEFAULT_VOICE_PROFILE.id;
@@ -116,13 +132,138 @@ export function validateVoiceProfile(
     exampleIds.add(example.id);
   }
 
+  const preferences = Array.isArray(candidate.preferences)
+    ? candidate.preferences
+    : [];
+  const preferenceIds = new Set<string>();
+
+  for (const preference of preferences) {
+    if (
+      !preference.id?.trim() ||
+      preferenceIds.has(preference.id) ||
+      !VOICE_DIMENSIONS.has(preference.dimension) ||
+      !preference.instruction?.trim() ||
+      !Array.isArray(preference.evidenceIds) ||
+      !['tentative', 'confirmed', 'user-set'].includes(preference.status) ||
+      !['low', 'medium', 'high'].includes(preference.confidence) ||
+      !['coach', 'fine-tune', 'edit-suggestion', 'manual'].includes(
+        preference.source,
+      )
+    ) {
+      throw new Error('Voice preferences are malformed or duplicated.');
+    }
+    preferenceIds.add(preference.id);
+  }
+
+  const preferenceEvidence = Array.isArray(candidate.preferenceEvidence)
+    ? candidate.preferenceEvidence
+    : [];
+
+  if (preferenceEvidence.length > MAX_PREFERENCE_EVIDENCE) {
+    throw new Error('A voice cannot retain more than 500 preference records.');
+  }
+
+  const evidenceIds = new Set<string>();
+  for (const evidence of preferenceEvidence) {
+    if (
+      !evidence.id?.trim() ||
+      evidenceIds.has(evidence.id) ||
+      !evidence.questionId?.trim() ||
+      !VOICE_DIMENSIONS.has(evidence.dimension) ||
+      !['a', 'b', 'tie', 'neither', 'custom'].includes(evidence.selected) ||
+      typeof evidence.sourceText !== 'string' ||
+      evidence.sourceText.length > MAX_EXAMPLE_LENGTH ||
+      (evidence.candidateA?.length ?? 0) > MAX_EXAMPLE_LENGTH ||
+      (evidence.candidateB?.length ?? 0) > MAX_EXAMPLE_LENGTH ||
+      (evidence.customText?.length ?? 0) > MAX_EXAMPLE_LENGTH
+    ) {
+      throw new Error('Voice preference evidence is malformed or duplicated.');
+    }
+    evidenceIds.add(evidence.id);
+  }
+
+  if (
+    preferences.some((preference) =>
+      preference.evidenceIds.some((id) => !evidenceIds.has(id)),
+    )
+  ) {
+    throw new Error('Voice preferences reference missing evidence.');
+  }
+
+  const calibrationSessions = Array.isArray(candidate.calibrationSessions)
+    ? candidate.calibrationSessions
+    : [];
+
+  if (calibrationSessions.length > MAX_CALIBRATION_SESSIONS) {
+    throw new Error('A voice cannot retain more than 50 calibration sessions.');
+  }
+
+  const sessionIds = new Set<string>();
+  for (const session of calibrationSessions) {
+    if (
+      !session.id?.trim() ||
+      sessionIds.has(session.id) ||
+      session.voiceProfileId !== candidate.id ||
+      !Array.isArray(session.questionIds) ||
+      session.questionIds.length === 0 ||
+      !Array.isArray(session.evidenceIds) ||
+      !['active', 'review', 'completed', 'abandoned'].includes(
+        session.status,
+      ) ||
+      !['coach', 'fine-tune'].includes(session.mode) ||
+      !Number.isInteger(session.currentIndex) ||
+      session.currentIndex < 0 ||
+      session.currentIndex > session.questionIds.length ||
+      session.evidenceIds.some((id) => !evidenceIds.has(id))
+    ) {
+      throw new Error(
+        'Voice calibration sessions are malformed or duplicated.',
+      );
+    }
+    sessionIds.add(session.id);
+  }
+
+  const manualRules = Array.isArray(candidate.manualRules)
+    ? candidate.manualRules
+    : Array.isArray(candidate.rules)
+      ? candidate.rules
+      : [];
+  const manualAntiRules = Array.isArray(candidate.manualAntiRules)
+    ? candidate.manualAntiRules
+    : Array.isArray(candidate.antiRules)
+      ? candidate.antiRules
+      : [];
+  if (
+    manualRules.some((rule) => typeof rule !== 'string') ||
+    manualAntiRules.some((rule) => typeof rule !== 'string')
+  ) {
+    throw new Error('Voice manual rules must be text.');
+  }
+  const activePreferences = preferences.filter(
+    (preference) =>
+      preference.status === 'confirmed' || preference.status === 'user-set',
+  );
+
   return {
     ...candidate,
-    antiRules: Array.isArray(candidate.antiRules) ? candidate.antiRules : [],
+    antiRules: uniqueStrings([
+      ...manualAntiRules,
+      ...activePreferences.flatMap((preference) =>
+        preference.avoidInstruction ? [preference.avoidInstruction] : [],
+      ),
+    ]),
+    calibrationSessions,
     description: candidate.description ?? '',
+    manualAntiRules: uniqueStrings(manualAntiRules),
+    manualRules: uniqueStrings(manualRules),
     name: candidate.name.trim(),
-    rules: Array.isArray(candidate.rules) ? candidate.rules : [],
-    schemaVersion: 1,
+    preferenceEvidence,
+    preferences,
+    rules: uniqueStrings([
+      ...manualRules,
+      ...activePreferences.map((preference) => preference.instruction),
+    ]),
+    schemaVersion: 2,
   };
 }
 
@@ -201,7 +342,7 @@ export function createAppBackup(
   return {
     documents: documents.map(normalizeDocument),
     exportedAt: new Date().toISOString(),
-    schemaVersion: 1,
+    schemaVersion: 2,
     voices: voices.map(validateVoiceProfile),
   };
 }
@@ -231,7 +372,7 @@ export function parseAppBackup(text: string): AppBackup {
       typeof backup.exportedAt === 'string'
         ? backup.exportedAt
         : new Date().toISOString(),
-    schemaVersion: 1,
+    schemaVersion: 2,
     voices: backup.voices.map(validateVoiceProfile),
   };
 }

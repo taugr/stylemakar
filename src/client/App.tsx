@@ -39,7 +39,17 @@ import type {
   StyleProfile,
   VoiceProfileRecord,
 } from '../shared/types';
-import { checkProviderCapabilities, rewriteDocument } from './api';
+import {
+  compileVoicePreferences,
+  saveEditSuggestion,
+  suggestPreferencesFromEdit,
+  type VoiceEditSuggestion,
+} from '../shared/styleLab';
+import {
+  checkProviderCapabilities,
+  generateStyleLabComparison,
+  rewriteDocument,
+} from './api';
 import { loadContentStore, saveContentStore } from './contentRepository';
 import { seedDocuments } from './sampleData';
 import {
@@ -55,6 +65,7 @@ import {
   saveProvider,
   saveProviderCapability,
 } from './storage';
+import { StyleLab } from './style-lab/StyleLab';
 
 function countWords(text: string): number {
   const matches = text.trim().match(/\S+/g);
@@ -157,6 +168,32 @@ function ExampleSnippet(props: {
       <p>{props.example}</p>
       <cite>{props.label}</cite>
     </blockquote>
+  );
+}
+
+function EditLearningPrompt(props: {
+  onDismiss: () => void;
+  onOpenStyleLab: () => void;
+  onSave: () => void;
+  suggestion: VoiceEditSuggestion;
+}): ReactElement {
+  return (
+    <aside className="edit-learning-prompt" aria-live="polite">
+      <span className="edit-learning-icon">
+        <Sparkles size={18} />
+      </span>
+      <div>
+        <strong>{props.suggestion.title}</strong>
+        <p>{props.suggestion.description} Save this as a voice preference?</p>
+      </div>
+      <div className="edit-learning-actions">
+        <button className="edit-learning-save" onClick={props.onSave}>
+          Save preference
+        </button>
+        <button onClick={props.onOpenStyleLab}>Review</button>
+        <button onClick={props.onDismiss}>Not this time</button>
+      </div>
+    </aside>
   );
 }
 
@@ -270,6 +307,7 @@ function VoiceManager(props: {
   onExport: (voice: VoiceProfileRecord) => void;
   onImport: (text: string, fileName: string) => void;
   onSelect: (id: string) => void;
+  onTrain: () => void;
   onUpdate: (voice: VoiceProfileRecord) => void;
   selected: VoiceProfileRecord;
   voices: VoiceProfileRecord[];
@@ -399,6 +437,9 @@ function VoiceManager(props: {
               </div>
             ) : null}
             <div className="voice-editor-actions">
+              <button onClick={props.onTrain}>
+                <Sparkles size={16} /> Teach StyleMakar your voice
+              </button>
               <button onClick={() => props.onDuplicate(props.selected)}>
                 Duplicate
               </button>
@@ -467,10 +508,14 @@ function VoiceManager(props: {
                         .split('\n')
                         .map((rule) => rule.trim())
                         .filter(Boolean),
+                      manualRules: event.target.value
+                        .split('\n')
+                        .map((rule) => rule.trim())
+                        .filter(Boolean),
                       updatedAt: new Date().toISOString(),
                     })
                   }
-                  value={props.selected.rules.join('\n')}
+                  value={props.selected.manualRules.join('\n')}
                 />
               </label>
               <label>
@@ -483,10 +528,14 @@ function VoiceManager(props: {
                         .split('\n')
                         .map((rule) => rule.trim())
                         .filter(Boolean),
+                      manualAntiRules: event.target.value
+                        .split('\n')
+                        .map((rule) => rule.trim())
+                        .filter(Boolean),
                       updatedAt: new Date().toISOString(),
                     })
                   }
-                  value={props.selected.antiRules.join('\n')}
+                  value={props.selected.manualAntiRules.join('\n')}
                 />
               </label>
             </div>
@@ -608,7 +657,11 @@ export function App(): ReactElement | null {
   const [error, setError] = useState<string | undefined>();
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [voiceManagerOpen, setVoiceManagerOpen] = useState(false);
+  const [styleLabOpen, setStyleLabOpen] = useState(false);
   const [voiceError, setVoiceError] = useState<string | undefined>();
+  const [editSuggestions, setEditSuggestions] = useState<VoiceEditSuggestion[]>(
+    [],
+  );
   const [mobileTab, setMobileTab] = useState<MobileTab>('source');
   const [activeSheet, setActiveSheet] = useState<MobileSheet | undefined>();
   const mobileContentRef = useRef<HTMLDivElement | null>(null);
@@ -901,14 +954,17 @@ export function App(): ReactElement | null {
   };
 
   const updateVoice = (voice: VoiceProfileRecord): void => {
+    const normalizedVoice = compileVoicePreferences(voice);
     setVoices((current) =>
       current.map((candidate) =>
-        candidate.id === voice.id ? voice : candidate,
+        candidate.id === normalizedVoice.id ? normalizedVoice : candidate,
       ),
     );
 
-    if (activeDocument.voiceProfileId === voice.id) {
-      updateActiveDocument({ styleProfile: voiceToStyleProfile(voice) });
+    if (activeDocument.voiceProfileId === normalizedVoice.id) {
+      updateActiveDocument({
+        styleProfile: voiceToStyleProfile(normalizedVoice),
+      });
     }
   };
 
@@ -916,13 +972,18 @@ export function App(): ReactElement | null {
     const now = new Date().toISOString();
     const voice: VoiceProfileRecord = {
       antiRules: [],
+      calibrationSessions: [],
       createdAt: now,
       description: 'A custom voice profile.',
       examples: [],
       id: crypto.randomUUID(),
+      manualAntiRules: [],
+      manualRules: [],
       name: `New voice ${voices.length + 1}`,
+      preferenceEvidence: [],
+      preferences: [],
       rules: [],
-      schemaVersion: 1,
+      schemaVersion: 2,
       updatedAt: now,
     };
     setVoices((current) => [...current, voice]);
@@ -936,6 +997,7 @@ export function App(): ReactElement | null {
     const now = new Date().toISOString();
     const voice: VoiceProfileRecord = {
       ...source,
+      calibrationSessions: [],
       createdAt: now,
       examples: source.examples.map((example) => ({
         ...example,
@@ -944,6 +1006,14 @@ export function App(): ReactElement | null {
       id: crypto.randomUUID(),
       isStarter: false,
       name: `${source.name} copy`,
+      preferenceEvidence: [],
+      preferences: source.preferences.map((preference) => ({
+        ...preference,
+        evidenceIds: [],
+        id: crypto.randomUUID(),
+        source: 'manual',
+        status: 'user-set',
+      })),
       updatedAt: now,
     };
     setVoices((current) => [...current, voice]);
@@ -1369,6 +1439,13 @@ export function App(): ReactElement | null {
       return;
     }
 
+    setEditSuggestions(
+      suggestPreferencesFromEdit(
+        activeVersion.generatedText,
+        activeVersion.editedText,
+      ),
+    );
+
     updateActiveDocument({
       versions: activeDocument.versions?.map((version) =>
         version.id === activeVersion.id
@@ -1376,6 +1453,61 @@ export function App(): ReactElement | null {
           : version,
       ),
     });
+  };
+
+  const generateCalibrationProof = async (
+    baseline: StyleProfile,
+    tuned: StyleProfile,
+    source: string,
+  ): Promise<{ priorText: string; tunedText: string }> => {
+    const readiness = capabilityMatchesProvider(capability, provider)
+      ? capability
+      : await runProviderCheck(provider);
+
+    if (!readiness?.rewriteReady || !readiness.selectedModel) {
+      throw new Error(
+        readiness?.error?.message ??
+          'Connect a compatible provider before comparing voices.',
+      );
+    }
+
+    const readyProvider = withModelDefaults(provider, readiness.selectedModel);
+    const runProof = async (styleProfile: StyleProfile): Promise<string> => {
+      const result = await rewriteDocument(
+        {
+          document: source,
+          provider: readyProvider,
+          referenceExamples: activeVoice.examples.map(
+            (example) => example.text,
+          ),
+          styleProfile,
+        },
+        { runId: crypto.randomUUID() },
+      );
+      const segmentResults = result.debug?.segmentResults ?? [];
+
+      if (
+        segmentResults.length > 0 &&
+        segmentResults.some((segment) => !segment.meaningCheck.pass)
+      ) {
+        throw new Error(
+          'The comparison was stopped because a candidate changed the meaning.',
+        );
+      }
+
+      return result.content;
+    };
+
+    const priorText = await runProof(baseline);
+    const tunedText = await runProof(tuned);
+    return { priorText, tunedText };
+  };
+
+  const keepEditSuggestion = (suggestion: VoiceEditSuggestion): void => {
+    updateVoice(saveEditSuggestion(activeVoice, suggestion));
+    setEditSuggestions((current) =>
+      current.filter((candidate) => candidate.id !== suggestion.id),
+    );
   };
 
   const confirmVersionUse = (version?: RewriteVersion): boolean => {
@@ -1567,11 +1699,11 @@ export function App(): ReactElement | null {
                   </button>
                   <button
                     className="mobile-add-link"
-                    onClick={() => setVoiceManagerOpen(true)}
+                    onClick={() => setStyleLabOpen(true)}
                     type="button"
                   >
-                    <Plus size={16} />
-                    Add
+                    <Sparkles size={16} />
+                    Style Lab
                   </button>
                 </section>
 
@@ -1673,6 +1805,17 @@ export function App(): ReactElement | null {
                     </div>
                   )}
 
+                  {editSuggestions[0] ? (
+                    <EditLearningPrompt
+                      onDismiss={() =>
+                        setEditSuggestions((current) => current.slice(1))
+                      }
+                      onOpenStyleLab={() => setStyleLabOpen(true)}
+                      onSave={() => keepEditSuggestion(editSuggestions[0]!)}
+                      suggestion={editSuggestions[0]}
+                    />
+                  ) : null}
+
                   <footer>
                     <span>{rewrittenWordCount.toLocaleString()} words</span>
                     <div className="mobile-output-actions">
@@ -1696,6 +1839,14 @@ export function App(): ReactElement | null {
                       >
                         <CheckCircle2 size={16} />
                         {activeVersion?.acceptedAt ? 'Accepted' : 'Accept'}
+                      </button>
+                      <button
+                        disabled={!activeVersion}
+                        onClick={() => setStyleLabOpen(true)}
+                        type="button"
+                      >
+                        <SlidersHorizontal size={16} />
+                        Tune voice
                       </button>
                       <button
                         disabled={!activeDocument.rewrittenText}
@@ -1935,6 +2086,16 @@ export function App(): ReactElement | null {
           >
             <Plus size={18} />
             New
+          </button>
+
+          <button
+            className="style-lab-nav-button"
+            onClick={() => setStyleLabOpen(true)}
+            type="button"
+          >
+            <Sparkles size={18} />
+            Style Lab
+            <span>New</span>
           </button>
 
           <section className="sidebar-section">
@@ -2204,6 +2365,17 @@ export function App(): ReactElement | null {
                 </div>
               )}
 
+              {editSuggestions[0] ? (
+                <EditLearningPrompt
+                  onDismiss={() =>
+                    setEditSuggestions((current) => current.slice(1))
+                  }
+                  onOpenStyleLab={() => setStyleLabOpen(true)}
+                  onSave={() => keepEditSuggestion(editSuggestions[0]!)}
+                  suggestion={editSuggestions[0]}
+                />
+              ) : null}
+
               <footer>
                 <span>{rewrittenWordCount.toLocaleString()} words</span>
                 <div className="output-actions">
@@ -2227,6 +2399,15 @@ export function App(): ReactElement | null {
                   >
                     <CheckCircle2 size={16} />
                     {activeVersion?.acceptedAt ? 'Accepted' : 'Accept'}
+                  </button>
+                  <button
+                    aria-label="This doesn't sound like me — tune voice"
+                    disabled={!activeVersion}
+                    onClick={() => setStyleLabOpen(true)}
+                    type="button"
+                  >
+                    <SlidersHorizontal size={16} />
+                    Tune voice
                   </button>
                   <button
                     disabled={!activeVersion}
@@ -2378,9 +2559,41 @@ export function App(): ReactElement | null {
           onExport={exportVoice}
           onImport={importVoice}
           onSelect={selectVoice}
+          onTrain={() => {
+            setVoiceManagerOpen(false);
+            setStyleLabOpen(true);
+          }}
           onUpdate={updateVoice}
           selected={activeVoice}
           voices={voices}
+        />
+      ) : null}
+
+      {styleLabOpen ? (
+        <StyleLab
+          onClose={() => setStyleLabOpen(false)}
+          onGenerateAdaptive={(comparison, signal) => {
+            if (providerStatus !== 'Ready' || !capability?.selectedModel) {
+              throw new Error(
+                'Connect a compatible provider before generating an adaptive example.',
+              );
+            }
+
+            return generateStyleLabComparison(
+              {
+                dimension: comparison.dimension,
+                preservedDetails: comparison.preservedDetails,
+                provider: withModelDefaults(provider, capability.selectedModel),
+                sourceText: comparison.sourceText,
+                voice: voiceToStyleProfile(activeVoice),
+              },
+              { signal },
+            );
+          }}
+          onGenerateProof={generateCalibrationProof}
+          onUpdateVoice={updateVoice}
+          providerReady={providerStatus === 'Ready'}
+          voice={activeVoice}
         />
       ) : null}
     </>

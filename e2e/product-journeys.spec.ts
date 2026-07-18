@@ -159,3 +159,161 @@ test('mobile sheets trap focus, close with Escape, and restore the trigger', asy
   await expect(dialog).toBeHidden();
   await expect(trigger).toBeFocused();
 });
+
+test('Voice Coach calibrates a local voice, requires review, and survives reload', async ({
+  page,
+}) => {
+  await page.getByRole('button', { name: /Style Lab/ }).click();
+  await expect(page.getByRole('dialog', { name: 'Style Lab' })).toBeVisible();
+  await page.getByRole('button', { name: 'Start Voice Coach' }).click();
+  await page.screenshot({
+    path: 'output/playwright-e2e/style-lab-desktop.png',
+  });
+
+  for (let index = 0; index < 7; index += 1) {
+    await expect(
+      page.getByRole('heading', {
+        name: 'Which version sounds more like you?',
+      }),
+    ).toBeVisible();
+    await page.getByRole('button', { name: /Choose A/ }).click();
+  }
+
+  await expect(
+    page.getByRole('heading', { name: 'Does this sound like your voice?' }),
+  ).toBeVisible();
+  await expect(page.getByText('Nothing is active yet.')).toBeVisible();
+  await page.getByRole('button', { name: 'Save without comparison' }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Keep shaping your voice' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Learned preferences' }),
+  ).toBeVisible();
+
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          JSON.parse(localStorage.getItem('stylemakar.voices') ?? '[]').length,
+      ),
+    )
+    .toBeGreaterThan(0);
+  const stored = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem('stylemakar.voices') ?? '[]'),
+  );
+  expect(stored[0].schemaVersion).toBe(2);
+  expect(stored[0].preferences).toHaveLength(7);
+  expect(stored[0].rules).toContain(
+    'Lead with the main point or requested action.',
+  );
+
+  await page.getByRole('button', { name: 'Close Style Lab' }).click();
+  await page.reload();
+  await page.getByRole('button', { name: /Style Lab/ }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Keep shaping your voice' }),
+  ).toBeVisible();
+});
+
+test('Fine-tune My Voice can prove a proposed change with a blinded rewrite', async ({
+  page,
+}) => {
+  await configureProvider(page);
+  await page.getByRole('button', { name: /Style Lab/ }).click();
+  await page.getByLabel('Fine-tune focus').selectOption('warmth');
+  await page.getByRole('button', { name: 'Fine-tune this voice' }).click();
+  await page.getByRole('button', { name: 'Try an adaptive example' }).click();
+  await expect(
+    page.getByText('Adaptive pair generated and meaning-checked.'),
+  ).toBeVisible();
+  await page.getByRole('button', { name: /Choose B/ }).click();
+  await page.getByRole('button', { name: 'Compare before saving' }).click();
+
+  await expect(
+    page.getByRole('heading', { name: 'Which result would you rather use?' }),
+  ).toBeVisible({ timeout: 15_000 });
+  await page.getByRole('button', { name: /Choose A/ }).click();
+  await expect(page.getByText(/preferred|Neither result/)).toBeVisible();
+  await page.getByRole('button', { name: /Save/ }).last().click();
+  await expect(
+    page.getByRole('heading', { name: 'Keep shaping your voice' }),
+  ).toBeVisible();
+});
+
+test('Voice Coach remains focused and keyboard-dismissable on mobile', async ({
+  page,
+}) => {
+  await page.setViewportSize({ height: 844, width: 390 });
+  await page.getByRole('button', { name: 'Style Lab' }).click();
+  await page.getByRole('button', { name: 'Start Voice Coach' }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Which version sounds more like you?' }),
+  ).toBeVisible();
+  await page.screenshot({
+    path: 'output/playwright-e2e/style-lab-mobile.png',
+  });
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog', { name: 'Style Lab' })).toBeHidden();
+});
+
+test('cancelling an adaptive example preserves the curated fallback', async ({
+  page,
+}) => {
+  await configureProvider(page, '/slow/v1');
+  await page.getByRole('button', { name: /Style Lab/ }).click();
+  await page.getByLabel('Fine-tune focus').selectOption('directness');
+  await page.getByRole('button', { name: 'Fine-tune this voice' }).click();
+  await page.getByRole('button', { name: 'Try an adaptive example' }).click();
+  const cancel = page.getByRole('button', {
+    name: 'Cancel adaptive example',
+  });
+  await expect(cancel).toBeVisible();
+  await cancel.click();
+  await expect(
+    page.getByRole('button', { name: 'Try an adaptive example' }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: /Choose A/ }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Does this sound like your voice?' }),
+  ).toBeVisible();
+});
+
+test('accepted edits become explicit, reversible voice suggestions', async ({
+  page,
+}) => {
+  await configureProvider(page);
+  await page
+    .getByLabel('Source text')
+    .last()
+    .fill(
+      'The June 2026 pilot included 42 participants and needs a clear summary.',
+    );
+  await page.getByRole('button', { name: 'Rewrite', exact: true }).click();
+  await expect(page.getByLabel('Rewritten text').last()).toHaveValue(/42/);
+  await page
+    .getByLabel('Rewritten text')
+    .last()
+    .fill('The June 2026 pilot had 42 participants.');
+  await page.getByRole('button', { name: 'Accept', exact: true }).click();
+
+  const desktopWorkspace = page.getByLabel('Rewrite workspace', {
+    exact: true,
+  });
+  await expect(
+    desktopWorkspace.getByText('Write more concisely'),
+  ).toBeVisible();
+  await desktopWorkspace
+    .getByRole('button', { name: 'Save preference' })
+    .click();
+  await page.getByRole('button', { name: /Style Lab/ }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Learned preferences' }),
+  ).toBeVisible();
+  await expect(page.getByLabel('Edit Concision preference')).toHaveValue(
+    /Prefer concise phrasing/,
+  );
+  await expect(
+    page.getByRole('button', { name: 'Remove Concision preference' }),
+  ).toBeVisible();
+});

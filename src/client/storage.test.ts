@@ -35,6 +35,7 @@ describe('voice profile storage', () => {
   it('round-trips rules and ordered examples through export JSON', () => {
     const voice: VoiceProfileRecord = {
       antiRules: ['Avoid hype.'],
+      calibrationSessions: [],
       createdAt: '2026-07-18T00:00:00.000Z',
       description: 'Concise and calm.',
       examples: [
@@ -52,9 +53,13 @@ describe('voice profile storage', () => {
         },
       ],
       id: 'calm-technical',
+      manualAntiRules: ['Avoid hype.'],
+      manualRules: ['Use short sentences.'],
       name: 'Calm technical',
+      preferenceEvidence: [],
+      preferences: [],
       rules: ['Use short sentences.'],
-      schemaVersion: 1,
+      schemaVersion: 2,
       updatedAt: '2026-07-18T00:00:00.000Z',
     };
 
@@ -74,6 +79,30 @@ describe('voice profile storage', () => {
         ],
       }),
     ).toThrow('unique');
+  });
+
+  it('migrates schema-one voices without turning learned data into hidden state', () => {
+    const legacy = {
+      antiRules: ['Avoid hype.'],
+      createdAt: '2026-01-01T00:00:00.000Z',
+      description: 'Legacy voice',
+      examples: [],
+      id: 'legacy',
+      name: 'Legacy',
+      rules: ['State the point.'],
+      schemaVersion: 1,
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    };
+    const migrated = parseVoiceProfileImport(JSON.stringify(legacy));
+
+    expect(migrated).toMatchObject({
+      calibrationSessions: [],
+      manualAntiRules: ['Avoid hype.'],
+      manualRules: ['State the point.'],
+      preferenceEvidence: [],
+      preferences: [],
+      schemaVersion: 2,
+    });
   });
 
   it('round-trips documents, versions, and voices in a full backup', () => {

@@ -12,6 +12,24 @@ async function readBody(request: http.IncomingMessage): Promise<string> {
 
 function completionFor(system: string): unknown {
   if (system.includes('matching this schema')) return { status: 'ok' };
+  if (system.includes('Create two alternative rewrites')) {
+    return {
+      candidateA: {
+        instruction: 'Use warm, encouraging language while staying specific.',
+        text: 'This is much clearer. One more change will help: make the opening claim more specific.',
+      },
+      candidateB: {
+        instruction: 'Use a neutral, matter-of-fact tone.',
+        text: 'The draft is clearer. Make the opening claim more specific.',
+      },
+    };
+  }
+  if (system.includes('Check both candidate rewrites')) {
+    return {
+      candidateA: { pass: true, risks: [] },
+      candidateB: { pass: true, risks: [] },
+    };
+  }
   if (system.includes('Extract meaning from the paragraph')) {
     return {
       caveats: [],

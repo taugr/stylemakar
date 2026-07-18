@@ -28,8 +28,106 @@ export type VoiceExample = {
   createdAt: string;
 };
 
+export type VoicePreferenceDimension =
+  | 'directness'
+  | 'warmth'
+  | 'formality'
+  | 'concision'
+  | 'rhythm'
+  | 'vocabulary'
+  | 'explanation-shape'
+  | 'custom';
+
+export type VoicePreference = {
+  id: string;
+  dimension: VoicePreferenceDimension;
+  instruction: string;
+  avoidInstruction?: string;
+  status: 'tentative' | 'confirmed' | 'user-set';
+  confidence: 'low' | 'medium' | 'high';
+  source: 'coach' | 'fine-tune' | 'edit-suggestion' | 'manual';
+  evidenceIds: string[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type VoicePreferenceEvidence = {
+  id: string;
+  questionId: string;
+  sourceText: string;
+  candidateA?: string;
+  candidateB?: string;
+  selected: 'a' | 'b' | 'tie' | 'neither' | 'custom';
+  customText?: string;
+  dimension: VoicePreferenceDimension;
+  createdAt: string;
+};
+
+export type VoiceCalibrationProof = {
+  sourceText: string;
+  candidateA: string;
+  candidateB: string;
+  candidateAType: 'prior' | 'tuned';
+  selected?: 'a' | 'b' | 'tie' | 'neither';
+  meaningChanged?: boolean;
+  createdAt: string;
+};
+
+export type VoiceCalibrationSession = {
+  id: string;
+  voiceProfileId: string;
+  mode: 'coach' | 'fine-tune';
+  status: 'active' | 'review' | 'completed' | 'abandoned';
+  focus?: VoicePreferenceDimension;
+  questionIds: string[];
+  evidenceIds: string[];
+  currentIndex: number;
+  baseline: StyleProfile;
+  generatedComparisons?: AdaptiveVoiceComparisonResponse[];
+  proof?: VoiceCalibrationProof;
+  startedAt: string;
+  completedAt?: string;
+};
+
+export type AdaptiveVoiceComparisonRequest = {
+  sourceText: string;
+  dimension: VoicePreferenceDimension;
+  preservedDetails: string[];
+  voice: StyleProfile;
+  provider: ModelProviderSettings;
+};
+
+export type AdaptiveVoiceComparisonResponse = {
+  id: string;
+  source: 'generated';
+  promptVersion: 1;
+  dimension: VoicePreferenceDimension;
+  sourceText: string;
+  candidateA: {
+    text: string;
+    instruction: string;
+    avoidInstruction?: string;
+  };
+  candidateB: {
+    text: string;
+    instruction: string;
+    avoidInstruction?: string;
+  };
+  preservedDetails: string[];
+  meaningCheck: {
+    candidateA: boolean;
+    candidateB: boolean;
+    risks: string[];
+  };
+};
+
 export type VoiceProfileRecord = StyleProfile & {
   examples: VoiceExample[];
+  manualRules: string[];
+  manualAntiRules: string[];
+  preferences: VoicePreference[];
+  preferenceEvidence: VoicePreferenceEvidence[];
+  calibrationSessions: VoiceCalibrationSession[];
   createdAt: string;
   updatedAt: string;
   schemaVersion: number;
@@ -311,14 +409,14 @@ export type DocumentRecord = {
 };
 
 export type AppBackup = {
-  schemaVersion: 1;
+  schemaVersion: 2;
   exportedAt: string;
   documents: DocumentRecord[];
   voices: VoiceProfileRecord[];
 };
 
 export type ContentStoreSnapshot = {
-  schemaVersion: 1;
+  schemaVersion: 2;
   updatedAt: string;
   documents: DocumentRecord[];
   voices: VoiceProfileRecord[];

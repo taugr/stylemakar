@@ -26,9 +26,10 @@ export function validateContentStoreSnapshot(
   }
 
   const snapshot = candidate as Partial<ContentStoreSnapshot>;
+  const schemaVersion = (candidate as { schemaVersion?: number }).schemaVersion;
 
   if (
-    snapshot.schemaVersion !== 1 ||
+    (schemaVersion !== 1 && schemaVersion !== 2) ||
     !Array.isArray(snapshot.documents) ||
     !Array.isArray(snapshot.voices)
   ) {
@@ -67,7 +68,7 @@ export function validateContentStoreSnapshot(
 
   return {
     documents,
-    schemaVersion: 1,
+    schemaVersion: 2,
     updatedAt:
       typeof snapshot.updatedAt === 'string'
         ? snapshot.updatedAt
@@ -86,7 +87,7 @@ export async function loadContentStore(
 
   return {
     documents: loadDocuments(seedDocuments),
-    schemaVersion: 1,
+    schemaVersion: 2,
     updatedAt: new Date().toISOString(),
     voices: loadVoiceProfiles(),
   };
@@ -98,7 +99,7 @@ export async function saveContentStore(
 ): Promise<void> {
   const snapshot = validateContentStoreSnapshot({
     documents,
-    schemaVersion: 1,
+    schemaVersion: 2,
     updatedAt: new Date().toISOString(),
     voices,
   });

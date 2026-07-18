@@ -24,6 +24,7 @@
 - Local-first React writing workspace
 - Tauri desktop prototype for macOS
 - OpenAI-compatible provider support, verified with LM Studio
+- Guided Voice Coach and focused voice calibration with editable preferences
 - Meaning checks for caveats, names, numbers, code blocks, and required terms
 - Promptfoo and custom eval scripts for rewrite quality checks
 - VitePress documentation site
@@ -81,6 +82,10 @@ The default provider settings are:
 
 In the UI, expand **Advanced checks** to edit the endpoint, refresh model
 discovery, and select the model.
+
+Voice Coach's curated comparisons work without a provider. A compatible model
+is required for rewrites, adaptive calibration examples, and the blinded
+prior-versus-tuned proof step.
 
 Check provider health through the local API:
 

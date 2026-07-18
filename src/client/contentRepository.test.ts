@@ -66,7 +66,7 @@ describe('shared content repository contract', () => {
   it('uses the native adapter and validates its result', async () => {
     const snapshot: ContentStoreSnapshot = {
       documents: [document],
-      schemaVersion: 1,
+      schemaVersion: 2,
       updatedAt: '2026-07-18T00:00:00.000Z',
       voices: [DEFAULT_VOICE_PROFILE],
     };
@@ -77,7 +77,7 @@ describe('shared content repository contract', () => {
     await expect(loadContentStore([])).resolves.toEqual(snapshot);
     await saveContentStore(snapshot.documents, snapshot.voices);
     expect(tauri.save).toHaveBeenCalledWith(
-      expect.objectContaining({ documents: [document], schemaVersion: 1 }),
+      expect.objectContaining({ documents: [document], schemaVersion: 2 }),
     );
   });
 
@@ -85,7 +85,7 @@ describe('shared content repository contract', () => {
     expect(() =>
       validateContentStoreSnapshot({
         documents: [document, document],
-        schemaVersion: 1,
+        schemaVersion: 2,
         updatedAt: 'now',
         voices: [DEFAULT_VOICE_PROFILE],
       }),
@@ -93,7 +93,7 @@ describe('shared content repository contract', () => {
     expect(() =>
       validateContentStoreSnapshot({
         documents: [],
-        schemaVersion: 2,
+        schemaVersion: 3,
         voices: [],
       }),
     ).toThrow('unsupported');

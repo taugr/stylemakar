@@ -68,6 +68,7 @@ export const DEFAULT_REFERENCE_EXAMPLES = [
 
 export const DEFAULT_VOICE_PROFILE: VoiceProfileRecord = {
   ...DEFAULT_STYLE_PROFILE,
+  calibrationSessions: [],
   createdAt: '2026-01-01T00:00:00.000Z',
   examples: DEFAULT_REFERENCE_EXAMPLES.map((text, index) => ({
     createdAt: '2026-01-01T00:00:00.000Z',
@@ -76,8 +77,12 @@ export const DEFAULT_VOICE_PROFILE: VoiceProfileRecord = {
     text,
   })),
   isStarter: true,
+  manualAntiRules: [...DEFAULT_STYLE_PROFILE.antiRules],
+  manualRules: [...DEFAULT_STYLE_PROFILE.rules],
   name: 'Product notes',
-  schemaVersion: 1,
+  preferenceEvidence: [],
+  preferences: [],
+  schemaVersion: 2,
   updatedAt: '2026-01-01T00:00:00.000Z',
 };
 
